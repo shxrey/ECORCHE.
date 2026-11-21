@@ -1,8 +1,9 @@
 'use client';
 
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/supabase/useUser';
 
 const noopSubscribe = () => () => {};
@@ -18,6 +19,26 @@ const useHydrated = () => useSyncExternalStore(noopSubscribe, () => true, () => 
 export function AccountNav() {
   const auth = useUser();
   const hydrated = useHydrated();
+  const userId = auth.status === 'signed-in' ? auth.user.id : null;
+  // Keyed by user so a sign-out/sign-in as someone else never shows a stale name.
+  const [profileName, setProfileName] = useState<{ userId: string; username: string | null } | null>(null);
+
+  useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (!supabase || !userId) return;
+    let cancelled = false;
+    supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', userId)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) setProfileName({ userId, username: data?.username ?? null });
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   if (!hydrated || auth.status === 'disabled' || auth.status === 'loading') return null;
   const targets = {
@@ -29,7 +50,9 @@ export function AccountNav() {
     auth.status === 'signed-in' ? (
       <Link href="/account" className={`nav-account ${extraClass}`} title={auth.user.email ?? 'Account'}>
         <span className="dot" aria-hidden="true" />
-        <span className="name">{(auth.user.email ?? 'Account').split('@')[0]}</span>
+        <span className="name">
+          {(profileName?.userId === auth.user.id && profileName.username) || (auth.user.email ?? 'Account').split('@')[0]}
+        </span>
       </Link>
     ) : (
       <Link href="/login" className={`nav-account cta ${extraClass}`}>
