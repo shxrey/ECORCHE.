@@ -9,14 +9,18 @@
     "lint": "eslint",
     "extract:legacy": "node scripts/extract-legacy.mjs",
     "verify:legacy": "tsx scripts/verify-legacy.tsx",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:db": "node supabase/tests/rls.test.mjs"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.2",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.17",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

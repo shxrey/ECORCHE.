@@ -1,3 +1,5 @@
+import '@/styles/auth.css';
+import { AccountNav } from '@/components/auth/AccountNav';
 import { LegacyFragment } from '@/components/legacy/LegacyFragment';
 import { LegacyRuntime } from '@/components/legacy/LegacyRuntime';
 import { Workout } from '@/components/workout/Workout';
@@ -22,6 +24,7 @@ export default function Home() {
       <LegacyFragment name="footer" />
       <LegacyFragment name="overlays" />
       <LegacyRuntime />
+      <AccountNav />
     </>
   );
 }

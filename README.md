@@ -2,7 +2,9 @@
 
 A science-backed 6-day Push / Pull / Legs (A/B) hypertrophy protocol: 46 exercises, 132 weekly working sets, with set tracking, weight/rep/RIR logging, PR detection, a voice-announced rest timer and a distraction-free Workout Mode.
 
-**Stack:** Next.js (App Router, TypeScript) · Supabase (Postgres + Auth), coming in Step 2 · Vercel
+**Live:** https://blueprint-ppl.vercel.app
+
+**Stack:** Next.js (App Router, TypeScript) · Supabase (Postgres, Auth, row-level security) · Vercel
 
 ## Run it
 
@@ -11,7 +13,24 @@ npm install
 npm run dev        # http://localhost:3000
 npm run build      # production build
 npm run typecheck
+npm run test:db    # schema + row-level-security tests (in-memory Postgres)
 ```
+
+Without Supabase settings the app runs local-only, exactly like the original. To enable accounts, create `.env.local`:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+```
+
+Both values are public by design. Security comes from row-level security in Postgres, not from hiding the key. Never put the `secret` / `service_role` key in this app.
+
+## Accounts & database
+
+- **Sign-in:** passwordless email code (`/login`). A code works on phones even when the email's link would open in a different browser; the link also works, via `/auth/confirm`. Sign-up and sign-in are the same flow.
+- **Schema:** [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql): `profiles`, `user_settings`, `set_logs`, `exercise_notes`, `active_sessions`. Every table is locked to `auth.uid() = user_id`.
+- **Proof:** `npm run test:db` applies the migration to PGlite and checks that one lifter can never read, edit, delete or forge another's rows, plus all the data constraints.
+- **Email template:** [`supabase/templates/login-email.html`](supabase/templates/login-email.html).
 
 ## How the port works
 
@@ -32,7 +51,7 @@ The app started as one 450 KB HTML file. It is being migrated with the **strangl
 
 ## Roadmap
 
-1. ✅ Next.js port, pixel-identical to the original
-2. Supabase auth + Postgres schema with row-level security
+1. ✅ Next.js port, pixel-identical to the original, live on Vercel
+2. ✅ Supabase auth (email code) + Postgres schema with row-level security
 3. Cloud sync of sets, logs and notes (offline-first), plus one-click import of old JSON backups
 4. Port legacy sections and logic to React components; PWA / offline support back
