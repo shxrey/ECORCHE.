@@ -172,7 +172,17 @@ create policy "notes: own rows" on public.exercise_notes for all to authenticate
 create policy "sessions: own rows" on public.active_sessions for all to authenticated
   using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
 
--- Anonymous visitors get nothing (RLS already denies them; this removes
--- the table privileges too, as defense in depth).
+-- ---------- API privileges ----------
+-- Explicit grants, so this works on projects where "Grant API access to new
+-- tables automatically" is off (the secure default). Signed-in lifters get
+-- exactly the operations their RLS policies allow; anonymous visitors get
+-- nothing at all (RLS would deny them anyway; this is defense in depth).
+
 revoke all on public.profiles, public.user_settings, public.set_logs,
               public.exercise_notes, public.active_sessions from anon;
+
+grant select, update                 on public.profiles        to authenticated;
+grant select, update                 on public.user_settings   to authenticated;
+grant select, insert, update, delete on public.set_logs        to authenticated;
+grant select, insert, update, delete on public.exercise_notes  to authenticated;
+grant select, insert, update, delete on public.active_sessions to authenticated;

@@ -18,11 +18,8 @@ await db.exec(`
   grant execute on function auth.uid() to anon, authenticated;
 `);
 await db.exec(migration);
-await db.exec(`
-  grant select, insert, update, delete on all tables in schema public to authenticated;
-  grant select, insert, update, delete on all tables in schema public to anon;
-  revoke all on public.profiles, public.user_settings, public.set_logs, public.exercise_notes, public.active_sessions from anon;
-`);
+// No extra grants here: like a Supabase project with "Grant API access to new
+// tables automatically" turned off, every permission must come from the migration.
 console.log('✓ migration applied');
 
 const A = '11111111-1111-1111-1111-111111111111';
