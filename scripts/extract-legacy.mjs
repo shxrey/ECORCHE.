@@ -44,10 +44,19 @@ for (const [from, to] of Object.entries(fontLines)) {
   if (!outCss.includes(from)) throw new Error('font stack not found: ' + from);
   outCss = outCss.replace(from, to);
 }
+// The bundler's CSS minifier, seeing both `backdrop-filter` and a hand-written
+// `-webkit-backdrop-filter`, keeps only the Safari-only prefixed one, which
+// silently kills every frosted-glass blur in Chrome/Edge. Drop the manual
+// prefix and let the minifier add it for the browsers that need it.
+const prefixed = /\s*-webkit-backdrop-filter:[^;]*;/g;
+if (!prefixed.test(outCss)) throw new Error('expected -webkit-backdrop-filter declarations');
+outCss = outCss.replace(prefixed, '');
 write('src/styles/protocol.css',
-  '/* Ported verbatim from the original single-file protocol. Only the three\n' +
-  '   --font-* stacks changed: they now lead with the self-hosted next/font\n' +
-  '   families instead of the Google Fonts <link>. */\n' + outCss);
+  '/* Ported verbatim from the original single-file protocol. Two changes:\n' +
+  '   the three --font-* stacks lead with the self-hosted next/font families\n' +
+  '   instead of the Google Fonts <link>, and the hand-written\n' +
+  '   -webkit-backdrop-filter lines are gone (the build adds that prefix;\n' +
+  '   keeping both made it drop the standard one, so Chrome lost the blur). */\n' + outCss);
 
 // ---------- 2. Body regions ----------
 const bodyStart = src.indexOf('>', src.indexOf('<body')) + 1;
