@@ -13,7 +13,8 @@ npm install
 npm run dev        # http://localhost:3000
 npm run build      # production build
 npm run typecheck
-npm run test:db    # schema + row-level-security tests (in-memory Postgres)
+npm run test:db    # schema, row-level security + sync functions (in-memory Postgres)
+npm run test:sync  # sync engine: simulated phone + laptop against a last-write-wins server
 ```
 
 Without Supabase settings the app runs local-only, exactly like the original. To enable accounts, create `.env.local`:
@@ -30,6 +31,7 @@ Both values are public by design. Security comes from row-level security in Post
 - **Sign-in:** passwordless email code (`/login`). A code works on phones even when the email's link would open in a different browser; the link also works, via `/auth/confirm`. Sign-up and sign-in are the same flow.
 - **Schema:** [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql): `profiles`, `user_settings`, `set_logs`, `exercise_notes`, `active_sessions`. Every table is locked to `auth.uid() = user_id`.
 - **Proof:** `npm run test:db` applies the migration to PGlite and checks that one lifter can never read, edit, delete or forge another's rows, plus all the data constraints.
+- **Cloud sync** ([`src/lib/sync`](src/lib/sync)): offline-first. The app always works on its own local copy; the sync engine diffs it into small records (a tick, one set's log, a note, a day's count, settings), queues changes in an outbox that survives offline use and closed tabs, and syncs through two Postgres functions, `sync_push` / `sync_pull` ([`0002_sync.sql`](supabase/migrations/0002_sync.sql)). Conflicts are last-write-wins per record, enforced on the server, so a phone that was offline all week can't overwrite newer edits from the laptop. Removals sync as tombstones. On a device's first sign-in, its existing progress (including anything restored from an old JSON backup) uploads without overriding the account.
 - **Email template:** [`supabase/templates/login-email.html`](supabase/templates/login-email.html).
 
 ## How the port works
@@ -53,5 +55,5 @@ The app started as one 450 KB HTML file. It is being migrated with the **strangl
 
 1. ✅ Next.js port, pixel-identical to the original, live on Vercel
 2. ✅ Supabase auth (email code) + Postgres schema with row-level security
-3. Cloud sync of sets, logs and notes (offline-first), plus one-click import of old JSON backups
+3. ✅ Cloud sync of sets, logs, notes and settings (offline-first, last-write-wins); old JSON backups upload via Import Backup
 4. Port legacy sections and logic to React components; PWA / offline support back

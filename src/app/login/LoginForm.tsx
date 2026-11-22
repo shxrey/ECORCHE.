@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type Step = 'email' | 'code';
@@ -15,7 +14,6 @@ const noopSubscribe = () => () => {};
  * New emails get an account automatically: sign-up and sign-in are one flow.
  */
 export function LoginForm() {
-  const router = useRouter();
   const supabase = getSupabaseBrowserClient();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
@@ -84,8 +82,8 @@ export function LoginForm() {
       setError(friendlyError(error.message));
       return;
     }
-    router.replace('/');
-    router.refresh();
+    // Full load, not router.replace: the protocol page's legacy script must boot fresh.
+    window.location.replace('/');
   }
 
   return (

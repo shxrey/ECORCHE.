@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { DocumentLink } from '@/components/legacy/DocumentLink';
 import '@/styles/auth.css';
 import { AccountPanel } from './AccountPanel';
 
@@ -11,12 +11,12 @@ export default function AccountPage() {
   return (
     <main className="auth-page">
       <div className="auth-top">
-        <Link href="/" className="nav-logo">
+        <DocumentLink href="/" className="nav-logo">
           SHREY&apos;S <span>BLUEPRINT</span>
-        </Link>
-        <Link href="/" className="auth-back">
+        </DocumentLink>
+        <DocumentLink href="/" className="auth-back">
           ← Back to protocol
-        </Link>
+        </DocumentLink>
       </div>
       <AccountPanel />
     </main>

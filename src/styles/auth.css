@@ -75,5 +75,11 @@
 .nav-account span.name { overflow: hidden; text-overflow: ellipsis; }
 .nav-account:hover { border-color: var(--accent); }
 .nav-account .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); flex-shrink: 0; }
+/* Sync status on the pill's dot: glowing accent = saved to account. */
+.nav-account[data-sync='syncing'] .dot { animation: nav-sync-pulse 1s ease-in-out infinite; }
+.nav-account[data-sync='offline'] .dot { background: var(--ink-muted); box-shadow: none; }
+.nav-account[data-sync='error'] .dot { background: var(--flame-bright); box-shadow: 0 0 8px var(--flame); }
+@keyframes nav-sync-pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .nav-account[data-sync='syncing'] .dot { animation: none; opacity: 0.6; } }
 .nav-account.cta { background: linear-gradient(135deg, var(--accent), var(--accent-bright)); color: var(--bg) !important; border: none; }
 .nav-account-drawer { margin-top: var(--space-3); font-size: 13px !important; padding: 12px 22px; max-width: 80vw; }

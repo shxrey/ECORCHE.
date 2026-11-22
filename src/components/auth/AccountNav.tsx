@@ -2,9 +2,10 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import Link from 'next/link';
+import { DocumentLink } from '@/components/legacy/DocumentLink';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/supabase/useUser';
+import { useSyncState, type SyncState } from '@/lib/sync/status';
 
 const noopSubscribe = () => () => {};
 /** false during server render and hydration, true afterwards. */
@@ -19,6 +20,7 @@ const useHydrated = () => useSyncExternalStore(noopSubscribe, () => true, () => 
 export function AccountNav() {
   const auth = useUser();
   const hydrated = useHydrated();
+  const sync = useSyncState();
   const userId = auth.status === 'signed-in' ? auth.user.id : null;
   // Keyed by user so a sign-out/sign-in as someone else never shows a stale name.
   const [profileName, setProfileName] = useState<{ userId: string; username: string | null } | null>(null);
@@ -48,16 +50,21 @@ export function AccountNav() {
 
   const pill = (extraClass: string) =>
     auth.status === 'signed-in' ? (
-      <Link href="/account" className={`nav-account ${extraClass}`} title={auth.user.email ?? 'Account'}>
+      <DocumentLink
+        href="/account"
+        className={`nav-account ${extraClass}`}
+        data-sync={sync.status}
+        title={`${auth.user.email ?? 'Account'} · ${syncLabel(sync)}`}
+      >
         <span className="dot" aria-hidden="true" />
         <span className="name">
           {(profileName?.userId === auth.user.id && profileName.username) || (auth.user.email ?? 'Account').split('@')[0]}
         </span>
-      </Link>
+      </DocumentLink>
     ) : (
-      <Link href="/login" className={`nav-account cta ${extraClass}`}>
+      <DocumentLink href="/login" className={`nav-account cta ${extraClass}`}>
         Sign in
-      </Link>
+      </DocumentLink>
     );
 
   return (
@@ -66,4 +73,15 @@ export function AccountNav() {
       {targets.drawer ? createPortal(pill('nav-account-drawer'), targets.drawer) : null}
     </>
   );
+}
+
+function syncLabel({ status, pending }: SyncState): string {
+  const waiting = pending ? ` (${pending} change${pending === 1 ? '' : 's'} waiting)` : '';
+  switch (status) {
+    case 'synced': return 'All changes saved to your account';
+    case 'syncing': return 'Syncing…';
+    case 'offline': return `Offline: saved on this device, will sync when you're back online${waiting}`;
+    case 'error': return `Sync paused: saved on this device, retrying soon${waiting}`;
+    default: return 'Account';
+  }
 }

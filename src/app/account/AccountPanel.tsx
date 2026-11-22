@@ -80,8 +80,8 @@ export function AccountPanel() {
     if (!supabase) return;
     setBusy(true);
     await supabase.auth.signOut();
-    router.replace('/');
-    router.refresh();
+    // Full load, not router.replace: the protocol page's legacy script must boot fresh.
+    window.location.replace('/');
   }
 
   const since = profile ? new Date(profile.created_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '…';
@@ -110,8 +110,9 @@ export function AccountPanel() {
       </form>
 
       <p className="auth-note">
-        <strong>Cloud sync is next.</strong> Your sets, logs and notes are still saved on this device for now. The next update
-        uploads them to your account so every device stays in step.
+        <strong>Cloud sync is on.</strong> Your ticked sets, weights, reps, RIR, PRs, notes and settings save to your account
+        and appear on every device you sign in on. It works offline too: changes upload once you&apos;re back online.
+        Have an old backup file? Open the protocol while signed in and use <em>Import Backup</em>; it uploads automatically.
       </p>
 
       <div className="auth-divider" />

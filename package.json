@@ -10,7 +10,8 @@
     "extract:legacy": "node scripts/extract-legacy.mjs",
     "verify:legacy": "tsx scripts/verify-legacy.tsx",
     "typecheck": "next typegen && tsc --noEmit",
-    "test:db": "node supabase/tests/rls.test.mjs"
+    "test:db": "node supabase/tests/rls.test.mjs",
+    "test:sync": "tsx --test src/lib/sync/sync.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

@@ -2,6 +2,7 @@ import '@/styles/auth.css';
 import { AccountNav } from '@/components/auth/AccountNav';
 import { LegacyFragment } from '@/components/legacy/LegacyFragment';
 import { LegacyRuntime } from '@/components/legacy/LegacyRuntime';
+import { CloudSync } from '@/components/sync/CloudSync';
 import { Workout } from '@/components/workout/Workout';
 
 /**
@@ -25,6 +26,7 @@ export default function Home() {
       <LegacyFragment name="overlays" />
       <LegacyRuntime />
       <AccountNav />
+      <CloudSync />
     </>
   );
 }

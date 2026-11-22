@@ -316,4 +316,15 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   });
 });
 `;
-write('public/legacy/protocol.js', bootstrap + js);
+// The sync bridge must see every global it touches, or the patch silently no-ops.
+const bridge = readFileSync(resolve(root, 'scripts/legacy-bridge.js'), 'utf8');
+for (const name of ['saveUnifiedState', 'flushUnifiedState', 'saveAutoRest', 'saveAudioEnabled', 'saveHighContrast',
+  'saveMesocycleWeek', 'updateAudioBtn', 'applyHighContrast', 'renderMesocycleBanner', 'updateSetDotAria',
+  'applyStoredCompletion', 'initExerciseEnhancements', 'renderHistory']) {
+  if (!new RegExp(`\\n  function ${name}\\(`).test(js)) throw new Error('legacy bridge: function not found: ' + name);
+}
+for (const name of ['doneMap', 'logMap', 'notesMap', 'sessionsMap', 'autoRestEnabled', 'audioEnabled',
+  'highContrastEnabled', 'mesocycleWeek']) {
+  if (!new RegExp(`\\n  let ${name} =`).test(js)) throw new Error('legacy bridge: top-level let not found: ' + name);
+}
+write('public/legacy/protocol.js', bootstrap + js + bridge);
