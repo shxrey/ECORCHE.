@@ -127,9 +127,10 @@ export class SyncEngine {
   }
 
   private async cycle(): Promise<void> {
-    this.onStatus('syncing', this.pendingCount);
     try {
       this.capture();
+      // Only uploads show as "syncing": background catch-up pulls stay silent.
+      if (this.pendingCount) this.onStatus('syncing', this.pendingCount);
       await this.pull();
       await this.push();
       this.onStatus('synced', this.pendingCount);

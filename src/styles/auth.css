@@ -79,7 +79,16 @@
 .nav-account[data-sync='syncing'] .dot { animation: nav-sync-pulse 1s ease-in-out infinite; }
 .nav-account[data-sync='offline'] .dot { background: var(--ink-muted); box-shadow: none; }
 .nav-account[data-sync='error'] .dot { background: var(--flame-bright); box-shadow: 0 0 8px var(--flame); }
+/* One glow-burst each time an upload lands ("saved"). */
+.nav-account[data-sync='synced'] .dot { animation: nav-sync-saved 0.9s ease-out 1; }
 @keyframes nav-sync-pulse { 50% { opacity: 0.35; } }
-@media (prefers-reduced-motion: reduce) { .nav-account[data-sync='syncing'] .dot { animation: none; opacity: 0.6; } }
+@keyframes nav-sync-saved {
+  35% { transform: scale(1.8); box-shadow: 0 0 16px 3px var(--accent); }
+  100% { transform: scale(1); box-shadow: 0 0 8px var(--accent); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-account[data-sync='syncing'] .dot { animation: none; opacity: 0.6; }
+  .nav-account[data-sync='synced'] .dot { animation: none; }
+}
 .nav-account.cta { background: linear-gradient(135deg, var(--accent), var(--accent-bright)); color: var(--bg) !important; border: none; }
 .nav-account-drawer { margin-top: var(--space-3); font-size: 13px !important; padding: 12px 22px; max-width: 80vw; }
