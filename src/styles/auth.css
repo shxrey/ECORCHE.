@@ -47,6 +47,8 @@
 }
 .auth-btn:hover:not(:disabled) { transform: scale(1.02); }
 .auth-btn:disabled { opacity: 0.5; cursor: wait; }
+/* A link styled as the main button (e.g. the 404 page's way home). */
+.auth-btn-link { display: flex; align-items: center; justify-content: center; text-decoration: none; }
 .auth-link-btn { background: none; border: none; color: var(--ink-muted); font-size: 13px; font-weight: 600; cursor: pointer; padding: 8px 0; font-family: var(--font-body); }
 .auth-link-btn:hover { color: var(--accent-bright); }
 

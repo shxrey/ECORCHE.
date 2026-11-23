@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { useUser } from '@/lib/supabase/useUser';
+import { forgetDeviceProgress, uploadBeforeSignOut } from '@/lib/sync/device';
 
 interface Profile {
   username: string | null;
@@ -21,6 +22,10 @@ export function AccountPanel() {
   const [displayName, setDisplayName] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+  // Set when signing out would lose changes that couldn't be uploaded (e.g. offline).
+  const [unsent, setUnsent] = useState(0);
+  const [signOutError, setSignOutError] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
 
   const userId = auth.status === 'signed-in' ? auth.user.id : null;
 
@@ -76,10 +81,33 @@ export function AccountPanel() {
     setMsg({ kind: 'ok', text: 'Saved.' });
   }
 
-  async function signOut() {
-    if (!supabase) return;
+  // Signing out also clears this device's copy of the lifter's progress, so the
+  // next person on a shared phone or laptop can't see it. Upload first, so
+  // nothing is lost; if that fails, ask before throwing changes away.
+  async function signOut(force = false) {
+    if (!supabase || !userId) return;
     setBusy(true);
-    await supabase.auth.signOut();
+    setSigningOut(true);
+    setSignOutError(null);
+    const stop = () => {
+      setBusy(false);
+      setSigningOut(false);
+    };
+    if (!force) {
+      const left = await uploadBeforeSignOut(supabase, userId);
+      if (left > 0) {
+        setUnsent(left);
+        stop();
+        return;
+      }
+    }
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      stop();
+      setSignOutError("Couldn't sign out. Check your connection and try again.");
+      return;
+    }
+    forgetDeviceProgress();
     // Full load, not router.replace: the protocol page's legacy script must boot fresh.
     window.location.replace('/');
   }
@@ -116,9 +144,30 @@ export function AccountPanel() {
       </p>
 
       <div className="auth-divider" />
-      <button className="auth-btn secondary" type="button" onClick={signOut} disabled={busy} style={{ width: '100%' }}>
-        Sign out
-      </button>
+      {unsent > 0 ? (
+        <div className="auth-msg error" role="alert">
+          <p style={{ margin: '0 0 var(--space-2)' }}>
+            {unsent === 1 ? '1 change' : `${unsent} changes`} on this device haven&apos;t reached your account yet (you may be
+            offline). Signing out now deletes {unsent === 1 ? 'it' : 'them'}.
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <button className="auth-btn secondary" type="button" onClick={() => setUnsent(0)} disabled={busy} style={{ flex: 1 }}>
+              Keep them
+            </button>
+            <button className="auth-btn secondary" type="button" onClick={() => signOut(true)} disabled={busy} style={{ flex: 1 }}>
+              Sign out anyway
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button className="auth-btn secondary" type="button" onClick={() => signOut()} disabled={busy} style={{ width: '100%' }}>
+          {signingOut ? 'Signing out…' : 'Sign out'}
+        </button>
+      )}
+      {signOutError ? <p className="auth-msg error" role="alert" style={{ marginTop: 'var(--space-2)' }}>{signOutError}</p> : null}
+      <p className="auth-note" style={{ marginTop: 'var(--space-2)' }}>
+        Signing out removes your workouts from this device. They stay safe in your account.
+      </p>
     </div>
   );
 }

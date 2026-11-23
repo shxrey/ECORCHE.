@@ -556,7 +556,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'hypertrophy-progress-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.download = 'ecorche-backup-' + todayKey() + '.json';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -610,7 +610,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'hypertrophy-log-' + new Date().toISOString().slice(0, 10) + '.csv';
+    a.download = 'ecorche-log-' + todayKey() + '.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -645,7 +645,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     }
     try {
       autoBackupHandle = await window.showSaveFilePicker({
-        suggestedName: 'hypertrophy-progress-autobackup.json',
+        suggestedName: 'ecorche-autobackup.json',
         types: [{ description: 'JSON backup', accept: { 'application/json': ['.json'] } }]
       });
       if (btn) { btn.textContent = 'Auto-Backup: On'; btn.classList.add('active-toggle'); }
@@ -2332,6 +2332,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   // system already dropped.
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) releaseWakeLock();
+    else if (kioskActive) requestWakeLock(); // back from another app mid-workout
   });
 
   function kioskElements() {

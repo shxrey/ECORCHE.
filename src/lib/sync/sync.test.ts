@@ -8,6 +8,7 @@ import {
   applyChanges, emptyState, flatten, normalizeLog,
   type LegacyState, type PullResult, type PushPayload,
 } from './model';
+import { forgetDeviceProgress, uploadBeforeSignOut } from './device';
 
 // ---------- fakes ----------
 
@@ -302,5 +303,77 @@ describe('engine', () => {
     await l.sync();
     assert.equal(laptop.state.prefs.mesocycleWeek, 3);
     assert.equal(laptop.state.prefs.highContrast, true);
+  });
+});
+
+// ---------- signing out (src/lib/sync/device.ts) ----------
+
+describe('sign-out', () => {
+  const USER = 'user-1';
+
+  /** A Map-backed localStorage, as the account page sees it (the legacy app isn't running there). */
+  function fakeStorage() {
+    const data = new Map<string, string>();
+    (globalThis as { localStorage?: unknown }).localStorage = {
+      getItem: (k: string) => data.get(k) ?? null,
+      setItem: (k: string, v: string) => void data.set(k, String(v)),
+      removeItem: (k: string) => void data.delete(k),
+    };
+    return data;
+  }
+  /** Just enough of a Supabase client for the two sync RPCs. */
+  function fakeSupabase(server: FakeServer, online = () => true) {
+    return {
+      rpc: async (fn: string, args: { p?: PushPayload; since?: string | null }) => {
+        if (!online()) throw new TypeError('Failed to fetch');
+        if (fn === 'sync_push') { server.push(args.p!); return { data: null, error: null }; }
+        return { data: server.pull(args.since ?? null), error: null };
+      },
+    } as unknown as Parameters<typeof uploadBeforeSignOut>[0];
+  }
+  /** What the device looks like after a sync, plus one edit made since. */
+  function deviceWithUnsyncedEdit(data: Map<string, string>, owner = USER) {
+    const state = emptyState();
+    tick(state, 'push-a1', 1);
+    log(state, 'push-a1', '2026-11-23', 1, '80', '8', '1');
+    data.set('hb_state_v1', JSON.stringify({ doneMap: state.doneMap, logMap: state.logMap, notesMap: {}, sessionsMap: {} }));
+    data.set('hb_completed_sets_v1', JSON.stringify({ 'pull-a1-set1': true })); // old pre-unified key
+    data.set('hb_audioEnabled_v1', 'false');
+    const meta: SyncMeta = { v: 1, owner, cursor: null, shadow: flatten(emptyState()), pending: {} };
+    data.set('hb_sync_v1', JSON.stringify(meta));
+  }
+
+  it('uploads the last edits first, then the device forgets the progress but keeps preferences', async () => {
+    const data = fakeStorage();
+    const server = new FakeServer();
+    deviceWithUnsyncedEdit(data);
+
+    assert.equal(await uploadBeforeSignOut(fakeSupabase(server), USER), 0);
+    assert.equal(server.get('checks|push-a1|1')?.checked, true, 'tick reached the account');
+    assert.equal(server.get('logs|push-a1|2026-11-23|1')?.weight, 80, 'log reached the account');
+
+    forgetDeviceProgress();
+    for (const key of ['hb_state_v1', 'hb_completed_sets_v1', 'hb_sync_v1']) assert.equal(data.has(key), false, key);
+    assert.equal(data.get('hb_audioEnabled_v1'), 'false', 'preferences stay');
+  });
+
+  it('offline: reports the changes that would be lost instead of deleting them', async () => {
+    const data = fakeStorage();
+    const server = new FakeServer();
+    deviceWithUnsyncedEdit(data);
+
+    const left = await uploadBeforeSignOut(fakeSupabase(server, () => false), USER);
+    assert.ok(left > 0, 'unsent changes reported');
+    assert.equal(server.get('checks|push-a1|1'), undefined);
+    assert.ok(data.has('hb_state_v1'), 'nothing removed');
+  });
+
+  it("never uploads another account's progress", async () => {
+    const data = fakeStorage();
+    const server = new FakeServer();
+    deviceWithUnsyncedEdit(data, 'someone-else');
+
+    assert.equal(await uploadBeforeSignOut(fakeSupabase(server), USER), 0);
+    assert.equal(server.get('checks|push-a1|1'), undefined);
   });
 });

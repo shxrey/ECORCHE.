@@ -310,9 +310,25 @@ const patches = [
   // Rebrand: the hero heading is rewritten on every day switch (see fragments above).
   [`'<br><span class="accent" id="heroAccent">BLUEPRINT</span>'`,
    `'<br><span class="accent" id="heroAccent">PROTOCOL</span>'`],
+  // Bug fix: Workout Mode keeps the screen awake, but the OS drops that lock
+  // whenever you switch apps, and it was never taken again on return, so the
+  // phone could sleep mid-workout after checking music or a message.
+  [`    if (document.hidden) releaseWakeLock();\n`,
+   `    if (document.hidden) releaseWakeLock();\n    else if (kioskActive) requestWakeLock(); // back from another app mid-workout\n`],
+  // Bug fix: downloads carried the old app name and a UTC date (a day behind
+  // before 05:30 in India). todayKey() is the app's own local-date helper.
+  // The 'hypertrophy-blueprint' tag inside the file stays, so old backups import.
+  [`a.download = 'hypertrophy-progress-' + new Date().toISOString().slice(0, 10) + '.json';`,
+   `a.download = 'ecorche-backup-' + todayKey() + '.json';`],
+  [`a.download = 'hypertrophy-log-' + new Date().toISOString().slice(0, 10) + '.csv';`,
+   `a.download = 'ecorche-log-' + todayKey() + '.csv';`],
+  [`suggestedName: 'hypertrophy-progress-autobackup.json',`,
+   `suggestedName: 'ecorche-autobackup.json',`],
 ];
 for (const [from, to] of patches) {
-  if (!js.includes(from)) throw new Error('patch target missing: ' + from);
+  // Exactly one match, so a patch can never land somewhere unintended.
+  const hits = js.split(from).length - 1;
+  if (hits !== 1) throw new Error(`patch target found ${hits} times (expected 1): ` + from);
   js = js.replace(from, to);
 }
 // No service worker ships yet (PWA comes back in a later step).
