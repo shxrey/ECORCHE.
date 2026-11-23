@@ -54,7 +54,7 @@ export default function TermsPage() {
       <h2>3. Your data</h2>
       <p>
         Your training data and notes belong to you. You allow us to store, process and sync them only to provide
-        ÉCORCHÉ to you. You can export them at any time and ask us to delete your account. Our{' '}
+        ÉCORCHÉ to you. You can export them and delete your account at any time. Our{' '}
         <DocumentLink href="/privacy">Privacy Policy</DocumentLink> explains exactly what we hold and why.
       </p>
 
@@ -92,8 +92,9 @@ export default function TermsPage() {
 
       <h2>8. Ending your use</h2>
       <p>
-        You can stop using ÉCORCHÉ at any time and ask us to delete your account by emailing {SUPPORT_EMAIL}. We may end
-        your access if you seriously or repeatedly break these terms.
+        You can stop using ÉCORCHÉ at any time and delete your account yourself from the{' '}
+        <DocumentLink href="/account">account page</DocumentLink> (or email {SUPPORT_EMAIL} if you can&apos;t sign in). We
+        may end your access if you seriously or repeatedly break these terms.
       </p>
 
       <h2>9. Changes to these terms</h2>

@@ -105,7 +105,7 @@ export default function PrivacyPage() {
 
       <h2>6. How long we keep it</h2>
       <ul>
-        <li><strong>Account and training data:</strong> for as long as you have an account. When it&apos;s deleted, it&apos;s removed from our database.</li>
+        <li><strong>Account and training data:</strong> for as long as you have an account. When you delete it, it&apos;s removed from our database straight away.</li>
         <li><strong>Technical logs:</strong> kept by our hosting provider for a short period, then deleted automatically.</li>
         <li><strong>Emails you send us:</strong> for as long as needed to help you.</li>
       </ul>
@@ -115,8 +115,9 @@ export default function PrivacyPage() {
         <li><strong>Download your data</strong> at any time with <em>Export Backup</em> (JSON) or <em>Export CSV</em> on the protocol page.</li>
         <li><strong>Correct it</strong> directly in the app or on your <DocumentLink href="/account">account page</DocumentLink>.</li>
         <li>
-          <strong>Delete your account and all its data</strong> by emailing {SUPPORT_EMAIL} from the address you sign in with.
-          We&apos;ll confirm once it&apos;s done.
+          <strong>Delete your account and all its data</strong> yourself, any time, with <em>Delete account</em> on your{' '}
+          <DocumentLink href="/account">account page</DocumentLink>. It takes effect immediately and can&apos;t be undone. If
+          you can&apos;t sign in, email {SUPPORT_EMAIL} from the address you used and we&apos;ll do it for you.
         </li>
         <li><strong>Clear a device:</strong> signing out removes your training data from that device. It stays safe in your account.</li>
         <li><strong>Withdraw consent</strong> at any time by stopping use and deleting your account.</li>

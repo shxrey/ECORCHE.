@@ -31,7 +31,8 @@ await db.exec(`insert into auth.users values ('${A}','a@x'), ('${B}','b@x');`);
 await db.exec(`insert into public.set_logs (user_id, exercise_key, log_date, set_idx, completed, weight)
                values ('${B}','legs-a1','2026-11-01',1,true,100)`);
 await db.exec(migration('0002_sync.sql'));
-console.log('✓ migrations applied (0002 on top of existing data)');
+await db.exec(migration('0003_delete_account.sql'));
+console.log('✓ migrations applied (0002 on top of existing data, then 0003)');
 
 const counts = await db.query(`select (select count(*) from public.profiles) p, (select count(*) from public.user_settings) s`);
 console.log('✓ signup trigger created rows:', counts.rows[0]);
@@ -117,12 +118,32 @@ check(await fails(null, `select public.sync_push('{}'::jsonb)`), 'anonymous visi
 check(await fails(null, `select public.sync_pull(null)`), 'anonymous visitors cannot call sync_pull');
 check(await fails(A, `select public.sync_push($1::jsonb)`, [JSON.stringify({ checks: [{ exercise_key: 'squat', set_idx: 1, checked: true, ts: T2 }] })]), 'sync_push still enforces constraints');
 
-// ---------- account deletion ----------
-await db.exec(`delete from auth.users where id = '${A}'`);
-const left = await db.query(`select (select count(*) from public.set_logs where user_id = '${A}') s,
+// ---------- account deletion (delete_my_account, 0003) ----------
+check(await fails(null, `select public.delete_my_account()`), 'anonymous visitors cannot call delete_my_account');
+await push(B, {
+  checks: [{ exercise_key: 'legs-a1', set_idx: 1, checked: true, ts: T1 }],
+  logs: [{ exercise_key: 'legs-a1', log_date: '2026-11-23', set_idx: 1, weight: 120, reps: 6, rir: 2, is_pr: false, ts: T1 }],
+});
+const bBefore = await db.query(`select (select count(*) from public.set_logs where user_id = '${B}') s,
+                                       (select count(*) from public.set_checks where user_id = '${B}') c`);
+check(Number(bBefore.rows[0].s) > 0 && Number(bBefore.rows[0].c) > 0, 'user B has data before user A deletes their account');
+
+await as(A, `select public.delete_my_account()`);
+const left = await db.query(`select (select count(*) from auth.users where id = '${A}') u,
+                                    (select count(*) from public.set_logs where user_id = '${A}') s,
                                     (select count(*) from public.set_checks where user_id = '${A}') c,
-                                    (select count(*) from public.profiles) p`);
-check(Number(left.rows[0].s) === 0 && Number(left.rows[0].c) === 0 && Number(left.rows[0].p) === 1, "deleting an account removes all of that user's data");
+                                    (select count(*) from public.daily_set_counts where user_id = '${A}') d,
+                                    (select count(*) from public.profiles where id = '${A}') p,
+                                    (select count(*) from public.user_settings where user_id = '${A}') st`);
+const l = Object.fromEntries(Object.entries(left.rows[0]).map(([k, v]) => [k, Number(v)]));
+check(l.u + l.s + l.c + l.d + l.p + l.st === 0, "delete_my_account removes the caller's account and all of their data");
+
+const bAfter = await db.query(`select (select count(*) from auth.users where id = '${B}') u,
+                                      (select count(*) from public.set_logs where user_id = '${B}') s,
+                                      (select count(*) from public.set_checks where user_id = '${B}') c`);
+check(Number(bAfter.rows[0].u) === 1 && bAfter.rows[0].s === bBefore.rows[0].s && bAfter.rows[0].c === bBefore.rows[0].c,
+  "deleting user A never touches user B's account or data");
+check(await fails(B, `select * from auth.users`), 'signed-in users still cannot read auth.users directly');
 
 console.log(failures ? `\n${failures} FAILED` : '\nAll checks passed');
 process.exit(failures ? 1 : 0);

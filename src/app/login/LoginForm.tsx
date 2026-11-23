@@ -35,6 +35,12 @@ export function LoginForm() {
     () => new URLSearchParams(window.location.search).get('error') === 'link',
     () => false,
   );
+  // Set by the account page after "Delete account" succeeds.
+  const accountDeleted = useSyncExternalStore(
+    noopSubscribe,
+    () => new URLSearchParams(window.location.search).get('deleted') === '1',
+    () => false,
+  );
   const shownError =
     error ?? (linkFailed && step === 'email' ? 'That sign-in link expired or was already used. Request a new code below.' : null);
 
@@ -126,6 +132,11 @@ export function LoginForm() {
           <p className="section-subtitle">
             Sync every set, PR and note between your phone at the gym and your laptop. No password: we email you a code.
           </p>
+          {accountDeleted && !shownError ? (
+            <p className="auth-msg ok" role="status" style={{ marginBottom: 'var(--space-4)' }}>
+              Your account and all its data have been deleted.
+            </p>
+          ) : null}
           <form className="auth-form" onSubmit={sendCode}>
             <label className="auth-label" htmlFor="email">
               Email

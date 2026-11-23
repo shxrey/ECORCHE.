@@ -72,6 +72,10 @@
 .auth-divider { height: 1px; background: var(--border); margin: var(--space-5) 0; }
 .auth-btn.secondary { background: var(--bg-elevated); color: var(--ink-muted); border: 1px solid var(--border); box-shadow: none; font-size: 16px; }
 .auth-btn.secondary:hover:not(:disabled) { color: var(--ink); border-color: var(--border-strong); }
+/* Irreversible actions (delete account): outlined in the danger colour, never the bright accent fill. */
+.auth-btn.danger { background: transparent; color: var(--danger-bright); border: 1px solid var(--danger-bright); box-shadow: none; font-size: 16px; }
+.auth-btn.danger:hover:not(:disabled) { background: rgba(255, 80, 80, 0.08); }
+.auth-btn.danger:disabled { cursor: not-allowed; }
 
 /* ---- Nav account pill (desktop: end of .nav-links; mobile: drawer) ---- */
 .nav-account {

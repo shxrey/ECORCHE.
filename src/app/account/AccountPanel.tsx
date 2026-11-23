@@ -21,6 +21,7 @@ export function AccountPanel() {
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   // Set when signing out would lose changes that couldn't be uploaded (e.g. offline).
   const [unsent, setUnsent] = useState(0);
@@ -64,12 +65,14 @@ export function AccountPanel() {
       return;
     }
     setBusy(true);
+    setSaving(true);
     setMsg(null);
     const { error } = await supabase
       .from('profiles')
       .update({ username: u || null, display_name: displayName.trim() || null })
       .eq('id', userId);
     setBusy(false);
+    setSaving(false);
     if (error) {
       setMsg({
         kind: 'error',
@@ -134,7 +137,7 @@ export function AccountPanel() {
         <input id="username" className="auth-input" maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false}
           placeholder="alex_lifts" value={username} onChange={e => setUsername(e.target.value.toLowerCase())} />
         {msg ? <p className={`auth-msg ${msg.kind}`} role="status">{msg.text}</p> : null}
-        <button className="auth-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save profile'}</button>
+        <button className="auth-btn" type="submit" disabled={busy}>{saving ? 'Saving…' : 'Save profile'}</button>
       </form>
 
       <p className="auth-note">
@@ -168,6 +171,71 @@ export function AccountPanel() {
       <p className="auth-note" style={{ marginTop: 'var(--space-2)' }}>
         Signing out removes your workouts from this device. They stay safe in your account.
       </p>
+
+      <div className="auth-divider" />
+      <DeleteAccount disabled={busy} onBusy={setBusy} />
+    </div>
+  );
+}
+
+/**
+ * Permanently deletes the account and everything in it (see
+ * supabase/migrations/0003_delete_account.sql), after the lifter types DELETE.
+ */
+function DeleteAccount({ disabled, onBusy }: { disabled: boolean; onBusy: (busy: boolean) => void }) {
+  const supabase = getSupabaseBrowserClient();
+  const [open, setOpen] = useState(false);
+  const [typed, setTyped] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const confirmed = typed.trim().toUpperCase() === 'DELETE';
+
+  async function deleteForever() {
+    if (!supabase || !confirmed) return;
+    setDeleting(true);
+    onBusy(true);
+    setError(null);
+    const { error } = await supabase.rpc('delete_my_account');
+    if (error) {
+      setDeleting(false);
+      onBusy(false);
+      setError("Couldn't delete your account. Check your connection and try again.");
+      return;
+    }
+    // The account is gone on the server; drop this browser's session and its copy of the data too.
+    await supabase.auth.signOut({ scope: 'local' });
+    forgetDeviceProgress();
+    window.location.replace('/login?deleted=1');
+  }
+
+  return (
+    <div className="auth-danger">
+      <div className="auth-label">Delete account</div>
+      <p className="auth-note" style={{ marginTop: 'var(--space-2)' }}>
+        Permanently deletes your account and everything in it: your profile and every logged set, PR, note and setting.
+        This can&apos;t be undone. Want to keep your history? Use <em>Export Backup</em> on the protocol page first.
+      </p>
+      {!open ? (
+        <button className="auth-btn danger" type="button" onClick={() => setOpen(true)} disabled={disabled} style={{ width: '100%' }}>
+          Delete account…
+        </button>
+      ) : (
+        <div className="auth-form" style={{ marginTop: 'var(--space-3)' }}>
+          <label className="auth-label" htmlFor="confirmDelete">Type DELETE to confirm</label>
+          <input id="confirmDelete" className="auth-input" autoComplete="off" autoCapitalize="characters" spellCheck={false}
+            placeholder="DELETE" value={typed} onChange={e => setTyped(e.target.value)} disabled={deleting} />
+          {error ? <p className="auth-msg error" role="alert">{error}</p> : null}
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <button className="auth-btn secondary" type="button" disabled={deleting} style={{ flex: 1 }}
+              onClick={() => { setOpen(false); setTyped(''); setError(null); }}>
+              Cancel
+            </button>
+            <button className="auth-btn danger" type="button" onClick={deleteForever} disabled={!confirmed || deleting} style={{ flex: 1 }}>
+              {deleting ? 'Deleting…' : 'Delete forever'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
