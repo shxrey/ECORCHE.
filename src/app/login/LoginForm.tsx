@@ -1,21 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore, type ClipboardEvent, type FormEvent } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from 'react';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type Step = 'email' | 'code';
 const noopSubscribe = () => () => {};
-// Supabase's email OTP length is set per project (6–10 digits; this one sends 8).
-const MIN_CODE = 6;
-const MAX_CODE = 10;
 
 /**
  * Passwordless sign-in: enter your email, receive a one-time code, type it in.
- * A code (instead of a magic link) matters on phones, where tapping a link in
- * the mail app often opens a different browser than the one you started in.
- * The email carries only the code, so mail apps can offer to copy it; pasting
- * a whole code here signs in at once. (/auth/confirm still handles the links
- * in emails sent before that change.)
+ * A code (instead of only a magic link) matters on phones, where tapping a
+ * link in the mail app often opens a different browser than the one you
+ * started in. The email carries a link too, handled by /auth/confirm.
  * New emails get an account automatically: sign-up and sign-in are one flow.
  */
 export function LoginForm() {
@@ -76,11 +71,12 @@ export function LoginForm() {
     setTimeout(() => codeRef.current?.focus(), 50);
   }
 
-  async function verify(token: string) {
-    if (!supabase || busy) return;
+  async function verifyCode(e: FormEvent) {
+    e.preventDefault();
+    if (!supabase) return;
     setBusy(true);
     setError(null);
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' });
+    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' });
     if (error) {
       setBusy(false);
       setError(friendlyError(error.message));
@@ -88,31 +84,6 @@ export function LoginForm() {
     }
     // Full load, not router.replace: the protocol page's legacy script must boot fresh.
     window.location.replace('/');
-  }
-
-  function verifyCode(e: FormEvent) {
-    e.preventDefault();
-    void verify(code);
-  }
-
-  // A whole code arriving at once (pasted from the email, or the keyboard's
-  // one-time-code suggestion) signs in straight away; typing digit by digit
-  // still waits for the Sign in button.
-  function onCodeChange(value: string) {
-    const next = value.replace(/\D/g, '');
-    const arrivedWhole = next.length >= MIN_CODE && next.length - code.length >= MIN_CODE - 1;
-    setCode(next);
-    if (arrivedWhole) void verify(next);
-  }
-
-  // Pasting "Your code is 12345678" or "1234 5678" would otherwise be cut off by
-  // maxLength before the digits are pulled out, so read the clipboard text whole.
-  function onCodePaste(e: ClipboardEvent<HTMLInputElement>) {
-    const digits = e.clipboardData.getData('text').replace(/\D/g, '');
-    if (digits.length < MIN_CODE || digits.length > MAX_CODE) return; // let the browser paste it as usual
-    e.preventDefault();
-    setCode(digits);
-    void verify(digits);
   }
 
   return (
@@ -156,7 +127,7 @@ export function LoginForm() {
             Enter <span className="accent">Code</span>
           </h1>
           <p className="section-subtitle">
-            We sent a code to <strong style={{ color: 'var(--ink)' }}>{email}</strong>. Paste it below and you&apos;re in.
+            We sent a code to <strong style={{ color: 'var(--ink)' }}>{email}</strong>. You can also tap the link in that email.
           </p>
           <form className="auth-form" onSubmit={verifyCode}>
             <label className="auth-label" htmlFor="code">
@@ -168,16 +139,15 @@ export function LoginForm() {
               className="auth-input code"
               inputMode="numeric"
               autoComplete="one-time-code"
-              pattern={`[0-9]{${MIN_CODE},${MAX_CODE}}`}
-              maxLength={MAX_CODE}
-              placeholder="00000000"
+              pattern="[0-9]{6,10}"
+              maxLength={10}
+              placeholder="000000"
               required
               value={code}
-              onChange={e => onCodeChange(e.target.value)}
-              onPaste={onCodePaste}
+              onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
             />
             {shownError ? <p className="auth-msg error" role="alert">{shownError}</p> : null}
-            <button className="auth-btn" type="submit" disabled={busy || code.length < MIN_CODE}>
+            <button className="auth-btn" type="submit" disabled={busy || code.length < 6}>
               {busy ? 'Checking…' : 'Sign in'}
             </button>
           </form>
