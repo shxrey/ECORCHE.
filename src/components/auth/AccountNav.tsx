@@ -81,7 +81,7 @@ export function AccountNav() {
         <span className="dot" aria-hidden="true" />
       </DocumentLink>
     ) : (
-      <DocumentLink href="/login" className="nav-account-mobile" aria-label="Sign in">
+      <DocumentLink href="/login" className="nav-account-mobile signed-out" aria-label="Sign in">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <circle cx="12" cy="8" r="4" />
           <path d="M4 21a8 8 0 0 1 16 0" />

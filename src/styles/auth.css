@@ -78,23 +78,28 @@
 .nav-account.cta { background: linear-gradient(135deg, var(--accent), var(--accent-bright)); color: var(--bg) !important; border: none; }
 .nav-account-drawer { margin-top: var(--space-3); font-size: 13px !important; padding: 12px 22px; max-width: 80vw; }
 
-/* ---- Phone account button: in the top bar beside the menu button, same
-   40px tile as .hamburger-btn, with the sync dot as a corner badge. ---- */
+/* ---- Phone account avatar: in the top bar beside the menu button. A round
+   avatar with the lifter's initial in an accent ring, and the sync dot as a
+   status badge on its edge (signed out: a plain person icon). ---- */
 .nav-account-mobile { display: none; }
 @media (max-width: 768px) {
   .nav-account-mobile {
     order: 1; margin-left: auto; position: relative;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    width: 40px; height: 40px; border-radius: var(--radius-md);
-    background: var(--bg-elevated); border: 1px solid var(--border);
+    width: 36px; height: 36px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 25%, var(--accent-glow), transparent 70%), var(--bg-elevated);
+    border: 1.5px solid var(--accent); box-shadow: 0 0 14px var(--accent-glow);
     color: var(--ink); text-decoration: none;
   }
-  .nav-account-mobile:hover, .nav-account-mobile:focus-visible { border-color: var(--accent); }
-  .top-nav .hamburger-btn { order: 2; margin-left: 8px; }
+  .nav-account-mobile.signed-out { background: var(--bg-elevated); border: 1px solid var(--border); box-shadow: none; }
+  .nav-account-mobile:hover, .nav-account-mobile:focus-visible { border-color: var(--accent-bright); }
+  /* 44px touch target around the 36px circle. */
+  .nav-account-mobile::after { content: ''; position: absolute; inset: -5px; border-radius: 50%; }
+  .top-nav .hamburger-btn { order: 2; margin-left: 10px; }
 }
-.nav-account-mobile .initial { font-family: var(--font-display); font-size: 19px; line-height: 1; letter-spacing: 0.02em; }
+.nav-account-mobile .initial { font-family: var(--font-display); font-size: 17px; line-height: 1; }
 .nav-account-mobile .dot {
-  position: absolute; top: -4px; right: -4px;
+  position: absolute; right: -2px; bottom: -2px;
   width: 11px; height: 11px; border-radius: 50%;
   background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 8px var(--accent);
 }
