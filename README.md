@@ -1,10 +1,10 @@
-# Shrey's Hypertrophy Blueprint
+# ÉCORCHÉ
 
 A science-backed 6-day Push / Pull / Legs (A/B) hypertrophy protocol: 46 exercises, 132 weekly working sets, with set tracking, weight/rep/RIR logging, PR detection, a voice-announced rest timer and a distraction-free Workout Mode.
 
-**Live:** https://blueprint-ppl.vercel.app
+**Live:** https://ecorche.app
 
-**Stack:** Next.js (App Router, TypeScript) · Supabase (Postgres, Auth, row-level security) · Vercel
+**Stack:** Next.js (App Router, TypeScript) · Supabase (Postgres, Auth, row-level security) · Resend (sign-in email) · Vercel
 
 ## Run it
 

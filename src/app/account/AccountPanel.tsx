@@ -100,11 +100,11 @@ export function AccountPanel() {
 
       <form className="auth-form" onSubmit={save}>
         <label className="auth-label" htmlFor="displayName">Display name</label>
-        <input id="displayName" className="auth-input" maxLength={40} autoComplete="nickname" placeholder="Shrey"
+        <input id="displayName" className="auth-input" maxLength={40} autoComplete="nickname" placeholder="Alex"
           value={displayName} onChange={e => setDisplayName(e.target.value)} />
         <label className="auth-label" htmlFor="username" style={{ marginTop: 'var(--space-2)' }}>Username</label>
         <input id="username" className="auth-input" maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false}
-          placeholder="shrey_lifts" value={username} onChange={e => setUsername(e.target.value.toLowerCase())} />
+          placeholder="alex_lifts" value={username} onChange={e => setUsername(e.target.value.toLowerCase())} />
         {msg ? <p className={`auth-msg ${msg.kind}`} role="status">{msg.text}</p> : null}
         <button className="auth-btn" type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save profile'}</button>
       </form>

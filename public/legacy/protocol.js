@@ -270,7 +270,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     });
 
     const data = PROGRAM[group];
-    document.getElementById('heroTitle').innerHTML = data.top + '<br><span class="accent" id="heroAccent">BLUEPRINT</span>';
+    document.getElementById('heroTitle').innerHTML = data.top + '<br><span class="accent" id="heroAccent">PROTOCOL</span>';
     document.getElementById('heroSubtitle').innerHTML = data.sub;
     document.getElementById('statEx').textContent = data.ex;
     document.getElementById('statSets').textContent = data.sets;

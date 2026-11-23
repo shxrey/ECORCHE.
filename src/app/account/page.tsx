@@ -4,7 +4,7 @@ import '@/styles/auth.css';
 import { AccountPanel } from './AccountPanel';
 
 export const metadata: Metadata = {
-  title: 'Account — Blueprint',
+  title: 'Account — ÉCORCHÉ',
 };
 
 export default function AccountPage() {
@@ -12,7 +12,7 @@ export default function AccountPage() {
     <main className="auth-page">
       <div className="auth-top">
         <DocumentLink href="/" className="nav-logo">
-          SHREY&apos;S <span>BLUEPRINT</span>
+          ÉCORCHÉ<span>.</span>
         </DocumentLink>
         <DocumentLink href="/" className="auth-back">
           ← Back to protocol

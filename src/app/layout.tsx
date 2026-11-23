@@ -20,10 +20,11 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Shrey's Hypertrophy Blueprint — Push / Pull / Legs Protocol",
+  title: 'ÉCORCHÉ — Push / Pull / Legs Hypertrophy Protocol',
+  applicationName: 'ÉCORCHÉ',
   description:
     'An evidence-based 6-day Push / Pull / Legs A-B split: 46 exercises, 132 weekly working sets, built on the hypertrophy research of Schoenfeld, Helms, Maeo and Nippard.',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'Hypertrophy' },
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'ÉCORCHÉ' },
 };
 
 export const viewport: Viewport = {
