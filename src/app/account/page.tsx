@@ -5,6 +5,7 @@ import { AccountPanel } from './AccountPanel';
 
 export const metadata: Metadata = {
   title: 'Account — ÉCORCHÉ',
+  robots: { index: false }, // private page: keep it out of search results
 };
 
 export default function AccountPage() {

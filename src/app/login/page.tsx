@@ -6,6 +6,7 @@ import { LoginForm } from './LoginForm';
 export const metadata: Metadata = {
   title: 'Sign in — ÉCORCHÉ',
   description: 'Sign in to sync your workouts, PRs and notes across devices.',
+  alternates: { canonical: '/login' },
 };
 
 export default function LoginPage() {

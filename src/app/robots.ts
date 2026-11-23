@@ -1,0 +1,10 @@
+import type { MetadataRoute } from 'next';
+import { SITE_URL } from '@/lib/site';
+
+// /robots.txt: let search engines index the protocol, skip the private pages.
+export default function robots(): MetadataRoute.Robots {
+  return {
+    rules: { userAgent: '*', allow: '/', disallow: ['/account', '/auth/'] },
+    sitemap: `${SITE_URL}/sitemap.xml`,
+  };
+}

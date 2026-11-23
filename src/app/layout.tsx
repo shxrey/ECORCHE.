@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Anton, Inter, JetBrains_Mono } from 'next/font/google';
 import '@/styles/protocol.css';
 import '@/styles/overrides.css';
+import { SITE_URL } from '@/lib/site';
 
 // Self-hosted at build time (no Google Fonts request, no layout shift).
 // protocol.css reads these through --font-display / --font-body / --font-mono.
@@ -19,12 +20,20 @@ const jetbrains = JetBrains_Mono({
   display: 'swap',
 });
 
+const title = 'ÉCORCHÉ — Push / Pull / Legs Hypertrophy Protocol';
+const description =
+  'An evidence-based 6-day Push / Pull / Legs A-B split: 46 exercises, 132 weekly working sets, built on the hypertrophy research of Schoenfeld, Helms, Maeo and Nippard.';
+
 export const metadata: Metadata = {
-  title: 'ÉCORCHÉ — Push / Pull / Legs Hypertrophy Protocol',
+  // Absolute URLs for share cards and canonical links always use the real domain.
+  metadataBase: new URL(SITE_URL),
+  title,
   applicationName: 'ÉCORCHÉ',
-  description:
-    'An evidence-based 6-day Push / Pull / Legs A-B split: 46 exercises, 132 weekly working sets, built on the hypertrophy research of Schoenfeld, Helms, Maeo and Nippard.',
+  description,
   appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: 'ÉCORCHÉ' },
+  // The share image comes from src/app/opengraph-image.tsx.
+  openGraph: { type: 'website', siteName: 'ÉCORCHÉ', title, description, url: '/' },
+  twitter: { card: 'summary_large_image', title, description },
 };
 
 export const viewport: Viewport = {
