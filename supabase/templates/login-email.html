@@ -3,11 +3,12 @@
   (Dashboard → Authentication → Emails → Templates):
     • "Magic Link"     (returning lifters)
     • "Confirm signup" (first-time lifters)
-  Subject for both:  Your Blueprint sign-in code
+  Subject for both:  Your ÉCORCHÉ sign-in code
+  Sent through Resend (custom SMTP) from login@ecorche.app, sender name ÉCORCHÉ.
 -->
 <div style="background:#0A0B08;padding:32px 16px;font-family:Inter,Segoe UI,Arial,sans-serif;color:#F4F5F0">
   <div style="max-width:440px;margin:0 auto;background:#181A15;border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:32px 24px">
-    <p style="margin:0 0 4px;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#6FC9A4;font-family:monospace">Shrey's Blueprint</p>
+    <p style="margin:0 0 4px;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#6FC9A4;font-family:monospace">&Eacute;CORCH&Eacute;</p>
     <h1 style="margin:0 0 16px;font-size:28px;letter-spacing:1px;text-transform:uppercase">Your sign-in code</h1>
     <p style="margin:0 0 20px;color:#969C8C;font-size:15px">Type this code into the app to sign in:</p>
     <p style="margin:0 0 24px;font-size:36px;font-weight:700;letter-spacing:10px;font-family:'JetBrains Mono',Consolas,monospace;color:#F4F5F0">{{ .Token }}</p>
