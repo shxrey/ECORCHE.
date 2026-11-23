@@ -75,20 +75,42 @@
 .nav-account span.name { overflow: hidden; text-overflow: ellipsis; }
 .nav-account:hover { border-color: var(--accent); }
 .nav-account .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); flex-shrink: 0; }
-/* Sync status on the pill's dot: glowing accent = saved to account. */
-.nav-account[data-sync='syncing'] .dot { animation: nav-sync-pulse 1s ease-in-out infinite; }
-.nav-account[data-sync='offline'] .dot { background: var(--ink-muted); box-shadow: none; }
-.nav-account[data-sync='error'] .dot { background: var(--flame-bright); box-shadow: 0 0 8px var(--flame); }
+.nav-account.cta { background: linear-gradient(135deg, var(--accent), var(--accent-bright)); color: var(--bg) !important; border: none; }
+.nav-account-drawer { margin-top: var(--space-3); font-size: 13px !important; padding: 12px 22px; max-width: 80vw; }
+
+/* ---- Phone account button: in the top bar beside the menu button, same
+   40px tile as .hamburger-btn, with the sync dot as a corner badge. ---- */
+.nav-account-mobile { display: none; }
+@media (max-width: 768px) {
+  .nav-account-mobile {
+    order: 1; margin-left: auto; position: relative;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 40px; height: 40px; border-radius: var(--radius-md);
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    color: var(--ink); text-decoration: none;
+  }
+  .nav-account-mobile:hover, .nav-account-mobile:focus-visible { border-color: var(--accent); }
+  .top-nav .hamburger-btn { order: 2; margin-left: 8px; }
+}
+.nav-account-mobile .initial { font-family: var(--font-display); font-size: 19px; line-height: 1; letter-spacing: 0.02em; }
+.nav-account-mobile .dot {
+  position: absolute; top: -4px; right: -4px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--bg); box-shadow: 0 0 8px var(--accent);
+}
+
+/* Sync status on the account dot (pill and phone button): glowing accent = saved to account. */
+[data-sync='syncing'] > .dot { animation: nav-sync-pulse 1s ease-in-out infinite; }
+[data-sync='offline'] > .dot { background: var(--ink-muted); box-shadow: none; }
+[data-sync='error'] > .dot { background: var(--flame-bright); box-shadow: 0 0 8px var(--flame); }
 /* One glow-burst each time an upload lands ("saved"). */
-.nav-account[data-sync='synced'] .dot { animation: nav-sync-saved 0.9s ease-out 1; }
+[data-sync='synced'] > .dot { animation: nav-sync-saved 0.9s ease-out 1; }
 @keyframes nav-sync-pulse { 50% { opacity: 0.35; } }
 @keyframes nav-sync-saved {
   35% { transform: scale(1.8); box-shadow: 0 0 16px 3px var(--accent); }
   100% { transform: scale(1); box-shadow: 0 0 8px var(--accent); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .nav-account[data-sync='syncing'] .dot { animation: none; opacity: 0.6; }
-  .nav-account[data-sync='synced'] .dot { animation: none; }
+  [data-sync='syncing'] > .dot { animation: none; opacity: 0.6; }
+  [data-sync='synced'] > .dot { animation: none; }
 }
-.nav-account.cta { background: linear-gradient(135deg, var(--accent), var(--accent-bright)); color: var(--bg) !important; border: none; }
-.nav-account-drawer { margin-top: var(--space-3); font-size: 13px !important; padding: 12px 22px; max-width: 80vw; }

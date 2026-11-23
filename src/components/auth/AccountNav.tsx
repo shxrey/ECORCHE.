@@ -45,21 +45,22 @@ export function AccountNav() {
   if (!hydrated || auth.status === 'disabled' || auth.status === 'loading') return null;
   const targets = {
     desktop: document.querySelector('.top-nav .nav-links'),
+    // Phones: the nav links are hidden behind the menu button, so a compact
+    // account button sits in the bar itself to keep the sync dot in view.
+    bar: document.querySelector('.top-nav'),
     drawer: document.getElementById('mobileDrawer'),
   };
 
+  const name = auth.status === 'signed-in'
+    ? (profileName?.userId === auth.user.id && profileName.username) || (auth.user.email ?? 'Account').split('@')[0]
+    : '';
+  const label = auth.status === 'signed-in' ? `${auth.user.email ?? 'Account'} · ${syncLabel(sync)}` : '';
+
   const pill = (extraClass: string) =>
     auth.status === 'signed-in' ? (
-      <DocumentLink
-        href="/account"
-        className={`nav-account ${extraClass}`}
-        data-sync={sync.status}
-        title={`${auth.user.email ?? 'Account'} · ${syncLabel(sync)}`}
-      >
+      <DocumentLink href="/account" className={`nav-account ${extraClass}`} data-sync={sync.status} title={label}>
         <span className="dot" aria-hidden="true" />
-        <span className="name">
-          {(profileName?.userId === auth.user.id && profileName.username) || (auth.user.email ?? 'Account').split('@')[0]}
-        </span>
+        <span className="name">{name}</span>
       </DocumentLink>
     ) : (
       <DocumentLink href="/login" className={`nav-account cta ${extraClass}`}>
@@ -67,9 +68,31 @@ export function AccountNav() {
       </DocumentLink>
     );
 
+  const barButton =
+    auth.status === 'signed-in' ? (
+      <DocumentLink
+        href="/account"
+        className="nav-account-mobile"
+        data-sync={sync.status}
+        title={label}
+        aria-label={`Account: ${name}. ${syncLabel(sync)}`}
+      >
+        <span className="initial" aria-hidden="true">{name.charAt(0).toUpperCase() || '?'}</span>
+        <span className="dot" aria-hidden="true" />
+      </DocumentLink>
+    ) : (
+      <DocumentLink href="/login" className="nav-account-mobile" aria-label="Sign in">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
+        </svg>
+      </DocumentLink>
+    );
+
   return (
     <>
       {targets.desktop ? createPortal(pill(''), targets.desktop) : null}
+      {targets.bar ? createPortal(barButton, targets.bar) : null}
       {targets.drawer ? createPortal(pill('nav-account-drawer'), targets.drawer) : null}
     </>
   );
