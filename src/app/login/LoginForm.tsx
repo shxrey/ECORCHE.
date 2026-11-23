@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ClipboardEvent, type FormEvent } from 'react';
+import { DocumentLink } from '@/components/legacy/DocumentLink';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type Step = 'email' | 'code';
@@ -146,7 +147,9 @@ export function LoginForm() {
             </button>
           </form>
           <p className="auth-note">
-            New here? The same button creates your account. Your existing progress on this device stays put.
+            New here? The same button creates your account. Your existing progress on this device stays put. By
+            continuing, you agree to the <DocumentLink href="/terms">Terms</DocumentLink> and{' '}
+            <DocumentLink href="/privacy">Privacy Policy</DocumentLink>.
           </p>
         </>
       ) : (

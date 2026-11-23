@@ -11,3 +11,8 @@
   #sourcesTabs { display: flex; width: 100%; }
   #sourcesTabs .group-tab { flex: 1 1 0; min-width: 0; padding: 10px 6px; }
 }
+
+/* Footer legal links (added to the footer fragment by the extractor). */
+.site-footer .footer-links { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 12.5px; font-weight: 600; }
+.site-footer .footer-links a { color: var(--ink-muted); text-decoration: none; }
+.site-footer .footer-links a:hover, .site-footer .footer-links a:focus-visible { color: var(--accent-bright); }

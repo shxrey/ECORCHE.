@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { DocumentLink } from '@/components/legacy/DocumentLink';
+import { LegalLinks } from '@/components/legal/LegalLinks';
 import '@/styles/auth.css';
 import { LoginForm } from './LoginForm';
 
@@ -21,6 +22,7 @@ export default function LoginPage() {
         </DocumentLink>
       </div>
       <LoginForm />
+      <LegalLinks />
     </main>
   );
 }

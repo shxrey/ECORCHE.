@@ -92,6 +92,10 @@ const rebrand = [
   ['footer', `<div class="logo-text">SHREY'S <span>BLUEPRINT</span></div>`, '<div class="logo-text">ÉCORCHÉ<span>.</span></div>'],
   ['hero', `Shrey's Science-Backed Protocol`, 'Science-Backed Protocol'],
   ['hero', 'id="heroAccent">BLUEPRINT</span>', 'id="heroAccent">PROTOCOL</span>'],
+  // Legal links (2026-11-24), just above the signature; styled in src/styles/overrides.css.
+  ['footer', '\n  <p style="margin-top:18px;font-size:11px;letter-spacing:0.08em;color:var(--ink-dim);font-family:var(--font-mono);">~ shrey</p>',
+    '\n  <p class="footer-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="mailto:support@ecorche.app">Contact</a></p>' +
+    '\n  <p style="margin-top:18px;font-size:11px;letter-spacing:0.08em;color:var(--ink-dim);font-family:var(--font-mono);">~ shrey</p>'],
 ];
 for (const [key, from, to] of rebrand) {
   if (!fragments[key].includes(from)) throw new Error(`rebrand target missing in ${key}: ${from}`);

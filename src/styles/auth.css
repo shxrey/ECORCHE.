@@ -57,6 +57,13 @@
 .auth-msg.ok { color: var(--accent-bright); border-color: var(--accent); background: var(--accent-glow); }
 .auth-note { font-size: 12.5px; color: var(--ink-dim); margin-top: var(--space-4); line-height: 1.6; }
 .auth-note strong { color: var(--ink-muted); }
+.auth-note a { color: var(--ink-muted); text-underline-offset: 3px; }
+.auth-note a:hover { color: var(--accent-bright); }
+
+/* Privacy · Terms · Contact under the sign-in / account card. */
+.auth-legal { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 18px; margin: 20px auto 0; font-size: 12.5px; font-weight: 600; }
+.auth-legal a { color: var(--ink-dim); text-decoration: none; }
+.auth-legal a:hover, .auth-legal a:focus-visible { color: var(--accent-bright); }
 
 .auth-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); padding: 12px 0; border-bottom: 1px solid var(--border); }
 .auth-row:last-of-type { border-bottom: none; }

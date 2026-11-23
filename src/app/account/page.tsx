@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { DocumentLink } from '@/components/legacy/DocumentLink';
+import { LegalLinks } from '@/components/legal/LegalLinks';
 import '@/styles/auth.css';
 import { AccountPanel } from './AccountPanel';
 
@@ -20,6 +21,7 @@ export default function AccountPage() {
         </DocumentLink>
       </div>
       <AccountPanel />
+      <LegalLinks />
     </main>
   );
 }

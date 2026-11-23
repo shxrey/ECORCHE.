@@ -1,0 +1,54 @@
+/* Privacy Policy and Terms: a long-form reading column in the protocol's own type and colour system. */
+
+.legal-page {
+  min-height: 100vh; min-height: 100dvh;
+  padding: 24px 16px calc(48px + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%, var(--accent-glow), transparent 70%),
+    var(--bg);
+}
+.legal-top { max-width: 720px; }
+
+.legal-doc {
+  max-width: 720px; margin: 32px auto 0;
+  background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: var(--radius-xl);
+  padding: var(--space-6) var(--space-5);
+}
+.legal-doc h1 {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: clamp(40px, 10vw, 64px); line-height: 1; letter-spacing: 0.01em;
+  margin: 10px 0 8px; color: var(--ink);
+}
+.legal-doc h1 .accent { color: var(--accent-bright); }
+.legal-updated { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; color: var(--ink-dim); margin: 0; }
+.legal-summary {
+  margin: var(--space-5) 0 var(--space-2); padding: 14px 18px;
+  border-left: 3px solid var(--accent); border-radius: var(--radius-md);
+  background: var(--accent-glow); color: var(--ink); font-size: 15.5px; line-height: 1.65;
+}
+.legal-summary p { margin: 0; color: var(--ink); }
+.legal-doc h2 {
+  font-family: var(--font-display); font-weight: 400; text-transform: uppercase;
+  font-size: 26px; letter-spacing: 0.02em; color: var(--ink);
+  margin: var(--space-6) 0 var(--space-3);
+}
+.legal-doc h3 { font-size: 15px; font-weight: 700; color: var(--ink); margin: var(--space-4) 0 6px; }
+.legal-doc p, .legal-doc li { color: var(--ink-muted); font-size: 15.5px; line-height: 1.7; }
+.legal-doc p { margin: 0 0 var(--space-3); }
+.legal-doc ul { margin: 0 0 var(--space-3); padding-left: 20px; }
+.legal-doc li { margin-bottom: 6px; }
+.legal-doc strong { color: var(--ink); }
+.legal-doc a { color: var(--accent-bright); text-underline-offset: 3px; overflow-wrap: anywhere; }
+
+.legal-foot {
+  max-width: 720px; margin: 24px auto 0;
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 20px;
+  font-size: 13px; font-weight: 600;
+}
+.legal-foot a { color: var(--ink-muted); text-decoration: none; }
+.legal-foot a:hover { color: var(--accent-bright); }
+
+@media (max-width: 480px) {
+  .legal-doc { padding: var(--space-5) var(--space-4); margin-top: 24px; }
+  .legal-doc h2 { font-size: 23px; }
+}
