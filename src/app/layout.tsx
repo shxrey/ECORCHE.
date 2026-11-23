@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Anton, Inter, JetBrains_Mono } from 'next/font/google';
 import '@/styles/protocol.css';
+import '@/styles/overrides.css';
 
 // Self-hosted at build time (no Google Fonts request, no layout shift).
 // protocol.css reads these through --font-display / --font-body / --font-mono.

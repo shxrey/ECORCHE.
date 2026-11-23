@@ -1,0 +1,13 @@
+/* Small fixes layered over the original stylesheet. protocol.css is
+   regenerated from the original HTML by scripts/extract-legacy.mjs, so
+   corrections to it live here (loaded right after it) instead. */
+
+/* Sources tab bar ("Push-Specific / Pull-Specific / Legs-Specific"): at its
+   original size it is ~370px wide, more than a phone's content area, which
+   let the whole page slide sideways. On small phones it becomes a
+   full-width segmented control instead; labels still wrap onto two lines
+   ("PUSH- / SPECIFIC") as they did in the original. */
+@media (max-width: 480px) {
+  #sourcesTabs { display: flex; width: 100%; }
+  #sourcesTabs .group-tab { flex: 1 1 0; min-width: 0; padding: 10px 6px; }
+}
