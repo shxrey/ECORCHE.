@@ -87,6 +87,8 @@ const fragments = {
 };
 // Rebrand (2026-11-23): "Shrey's Blueprint" became ÉCORCHÉ. Only visible brand
 // text changes; layout and styling stay exactly as in the original.
+// Same plain link as FEEDBACK_HREF in src/lib/feedback.ts (this script can't import TypeScript).
+const FEEDBACK_HREF = 'mailto:support@ecorche.app?subject=' + encodeURIComponent('ÉCORCHÉ feedback');
 const rebrand = [
   ['nav', `<div class="nav-logo">SHREY'S <span>BLUEPRINT</span></div>`, '<div class="nav-logo">ÉCORCHÉ<span>.</span></div>'],
   ['footer', `<div class="logo-text">SHREY'S <span>BLUEPRINT</span></div>`, '<div class="logo-text">ÉCORCHÉ<span>.</span></div>'],
@@ -94,7 +96,8 @@ const rebrand = [
   ['hero', 'id="heroAccent">BLUEPRINT</span>', 'id="heroAccent">PROTOCOL</span>'],
   // Legal links (2026-11-24), just above the signature; styled in src/styles/overrides.css.
   ['footer', '\n  <p style="margin-top:18px;font-size:11px;letter-spacing:0.08em;color:var(--ink-dim);font-family:var(--font-mono);">~ shrey</p>',
-    '\n  <p class="footer-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="mailto:support@ecorche.app">Contact</a></p>' +
+    '\n  <p class="footer-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="mailto:support@ecorche.app">Contact</a>' +
+    `<a href="${FEEDBACK_HREF}" data-feedback>Feedback</a></p>` +
     '\n  <p style="margin-top:18px;font-size:11px;letter-spacing:0.08em;color:var(--ink-dim);font-family:var(--font-mono);">~ shrey</p>'],
   // kg / lb switch (2026-11-24) beside Auto-Rest; logic in scripts/legacy-units.js,
   // styled in src/styles/overrides.css. Starts on kg; the script marks the saved unit.
@@ -105,6 +108,11 @@ const rebrand = [
     '        <button type="button" class="active" data-unit="kg" aria-pressed="true" onclick="setWeightUnit(\'kg\')">kg</button>\n' +
     '        <button type="button" data-unit="lb" aria-pressed="false" onclick="setWeightUnit(\'lb\')">lb</button>\n' +
     '      </div>\n'],
+  // "Send feedback" at the bottom of the phone menu (2026-11-24); src/components/FeedbackLinks.tsx
+  // fills in the page and device details on click. Styled in src/styles/overrides.css.
+  ['nav', '  <a href="#sources" onclick="toggleDrawer(false)">Sources</a>\n</div>',
+    '  <a href="#sources" onclick="toggleDrawer(false)">Sources</a>\n' +
+    `  <a href="${FEEDBACK_HREF}" class="drawer-feedback" data-feedback onclick="toggleDrawer(false)">Send feedback</a>\n</div>`],
   // The hidden file picker behind "Import Backup" had no name (screen-reader audit, 2026-11-24).
   ['tracker', '<input type="file" id="importFileInput" accept="application/json"',
     '<input type="file" id="importFileInput" aria-label="Backup file to import" accept="application/json"'],

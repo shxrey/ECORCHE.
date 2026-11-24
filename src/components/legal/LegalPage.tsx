@@ -2,8 +2,10 @@ import type { ReactNode } from 'react';
 import { DocumentLink } from '@/components/legacy/DocumentLink';
 import '@/styles/auth.css'; // shared top bar (.auth-top, .auth-back)
 import '@/styles/legal.css';
+import { FEEDBACK_HREF } from '@/lib/feedback';
+import { SUPPORT_EMAIL } from '@/lib/site';
 
-export const SUPPORT_EMAIL = 'support@ecorche.app';
+export { SUPPORT_EMAIL };
 export const LEGAL_UPDATED = '24 November 2026';
 
 /** Shared layout for the Privacy Policy and Terms: logo bar, readable column, links between the two. */
@@ -34,6 +36,7 @@ export function LegalPage({ eyebrow, title, summary, children }: { eyebrow: stri
         <DocumentLink href="/privacy">Privacy Policy</DocumentLink>
         <DocumentLink href="/terms">Terms of Service</DocumentLink>
         <a href={`mailto:${SUPPORT_EMAIL}`}>Contact</a>
+        <a href={FEEDBACK_HREF} data-feedback>Feedback</a>
       </nav>
     </main>
   );

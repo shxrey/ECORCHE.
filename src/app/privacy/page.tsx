@@ -59,7 +59,11 @@ export default function PrivacyPage() {
         out from the request, which is thrown away within 24 hours.
       </p>
       <h3>If you email us</h3>
-      <p>Your email address and whatever you write, so we can reply.</p>
+      <p>
+        Your email address and whatever you write, so we can reply. A message started with <em>Send feedback</em> also
+        includes the page you were on, your browser, device and screen width, and the app version, to help us fix bugs.
+        You can see and edit all of it before sending.
+      </p>
       <p>
         We don&apos;t collect payment details, your location, contacts, photos or anything else from your device.
       </p>

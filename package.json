@@ -11,7 +11,7 @@
     "verify:legacy": "tsx scripts/verify-legacy.tsx",
     "typecheck": "next typegen && tsc --noEmit",
     "test:db": "node supabase/tests/rls.test.mjs",
-    "test:sync": "tsx --test src/lib/sync/sync.test.ts src/lib/supabase/session-cookie.test.ts"
+    "test:sync": "tsx --test src/lib/sync/sync.test.ts src/lib/supabase/session-cookie.test.ts src/lib/feedback.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
