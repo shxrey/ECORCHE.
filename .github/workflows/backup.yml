@@ -1,0 +1,84 @@
+# Nightly database backup, encrypted, kept for 30 days.
+# Also counts as activity, so the free Supabase project never pauses for being idle.
+# Setup (two secrets), downloading and restoring: docs/backups.md
+#
+# This repository is PUBLIC: run logs and artifacts can be seen by others.
+# So the dump is encrypted before upload, nothing is ever committed, and the
+# log only shows file sizes and row counts.
+name: Nightly backup
+
+on:
+  schedule:
+    - cron: '30 21 * * *' # 03:00 in India
+  workflow_dispatch: # "Run workflow" button, for a backup on demand
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Check the two secrets are set
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::Add the SUPABASE_DB_URL and BACKUP_PASSPHRASE repository secrets first (see docs/backups.md)."
+            exit 1
+          fi
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 3.1.0
+
+      # Supabase's own method (supabase.com/docs/guides/deployment/ci/backups).
+      - name: Dump roles, schema and data
+        run: |
+          mkdir dump
+          supabase db dump --remote="$SUPABASE_DB_URL" -f dump/roles.sql --role-only
+          supabase db dump --remote="$SUPABASE_DB_URL" -f dump/schema.sql
+          supabase db dump --remote="$SUPABASE_DB_URL" -f dump/data.sql --data-only --use-copy \
+            -x "storage.buckets_vectors" -x "storage.vector_indexes"
+
+      - name: Summary (sizes and row counts only)
+        run: |
+          ls -l dump | awk 'NR > 1 { printf "%-12s %9d bytes\n", $9, $5 }'
+          echo "Rows per table:"
+          awk '/^COPY /{ table = $2; rows = 0; next } /^\\\.$/{ if (rows) printf "  %-32s %d\n", table, rows; next } { rows++ }' dump/data.sql
+          test -s dump/schema.sql && test -s dump/data.sql
+
+      - name: Encrypt
+        id: pack
+        run: |
+          name="ecorche-db-$(date -u +%Y-%m-%d)"
+          tar -czf backup.tar.gz -C dump .
+          gpg --batch --yes --pinentry-mode loopback --passphrase-fd 3 \
+            --symmetric --cipher-algo AES256 -o "$name.tar.gz.gpg" backup.tar.gz 3< <(printf '%s' "$BACKUP_PASSPHRASE")
+          rm -rf dump backup.tar.gz
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.pack.outputs.name }}
+          path: ${{ steps.pack.outputs.name }}.tar.gz.gpg
+          retention-days: 30
+          if-no-files-found: error
+          compression-level: 0 # already compressed
+
+      # One small request through the public API too (the sign-in settings, which the
+      # publishable key may read), so the project shows activity even if the database
+      # dump alone didn't count. The URL and the publishable key are public by design:
+      # every visitor's browser receives them. Runs even if the backup failed.
+      - name: Keep the free Supabase project awake
+        if: always()
+        run: |
+          curl -fsS -o /dev/null -w "Supabase API answered: %{http_code}\n" \
+            -H "apikey: sb_publishable_vCkap19VUKCtrBLlFt-W_Q_ZC1_5wpo" \
+            "https://bfzonejnwtharmvsawyr.supabase.co/auth/v1/settings"
