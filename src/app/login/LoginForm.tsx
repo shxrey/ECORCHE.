@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ClipboardEvent, type FormEvent } from 'react';
 import { DocumentLink } from '@/components/legacy/DocumentLink';
+import { friendlyAuthError } from '@/lib/supabase/auth-errors';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 type Step = 'email' | 'code';
@@ -73,7 +74,7 @@ export function LoginForm() {
     });
     setBusy(false);
     if (error) {
-      setError(friendlyError(error.message));
+      setError(friendlyAuthError(error));
       return;
     }
     setStep('code');
@@ -89,7 +90,7 @@ export function LoginForm() {
     const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token, type: 'email' });
     if (error) {
       setBusy(false);
-      setError(friendlyError(error.message));
+      setError(friendlyAuthError(error));
       return;
     }
     // Full load, not router.replace: the protocol page's legacy script must boot fresh.
@@ -206,12 +207,4 @@ export function LoginForm() {
       )}
     </div>
   );
-}
-
-function friendlyError(message: string): string {
-  const m = message.toLowerCase();
-  if (m.includes('rate limit') || m.includes('security purposes')) return 'Too many attempts. Wait a minute, then try again.';
-  if (m.includes('expired') || m.includes('invalid')) return "That code didn't work. Check it, or request a new one.";
-  if (m.includes('email')) return 'Enter a valid email address.';
-  return message;
 }
