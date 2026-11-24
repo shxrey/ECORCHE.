@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-ÉCORCHÉ (https://ecorche.app): a 6-day Push/Pull/Legs hypertrophy tracker. Next.js 16 (App Router, TypeScript), Supabase (Postgres + Auth + RLS), Resend for sign-in email, deployed on Vercel. Every push to `main` on github.com/shxrey/blueprint-ppl auto-deploys to production.
+ÉCORCHÉ (https://ecorche.app): a 6-day Push/Pull/Legs hypertrophy tracker. Next.js 16 (App Router, TypeScript), Supabase (Postgres + Auth + RLS), Resend for sign-in email, deployed on Vercel. Every push to `main` on github.com/shxrey/ECORCHE. (formerly blueprint-ppl) auto-deploys to production. The legacy code is being replaced in phases: see `docs/react-rebuild-plan.md` before starting that work. Nightly encrypted database backups: `docs/backups.md`.
 
 ## Commands
 
