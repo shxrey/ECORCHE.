@@ -403,6 +403,10 @@ const cuts = [
    '    // Re-counts every time the section scrolls back into view, so the lines\n' +
    '    // stay current without a full multi-card scan on every set tap.\n'],
   ['  // Heuristic match: takes the volume card\'s muscle name', '  // ===== SOURCES ACCORDION (collapse long study lists) =====', ''],
+  // Anatomy and Sources tabs, and "Show N more studies": GroupTabs.tsx and StudyList.tsx.
+  ['  // ===== ANATOMY TABS =====\n', '  // ===== AMBIENT PARTICLES =====', ''],
+  ['  // ===== SOURCES ACCORDION (collapse long study lists) =====\n', '  // ===== KIOSK / WORKOUT MODE =====', ''],
+  ['  initSourcesAccordion();\n', '  initKioskButtons();', ''],
 ];
 for (const [start, end, replacement] of cuts) {
   const s = js.indexOf(start);

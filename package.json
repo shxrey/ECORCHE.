@@ -12,7 +12,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test:db": "node supabase/tests/rls.test.mjs",
     "test:unit": "tsx --test \"src/**/*.test.ts\"",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:visual": "playwright test -c playwright.visual.config.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

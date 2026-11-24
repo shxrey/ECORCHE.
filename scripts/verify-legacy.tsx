@@ -19,9 +19,11 @@ import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import * as cheerio from 'cheerio';
 import type { AnyNode, Element } from 'domhandler';
+import { Anatomy } from '../src/components/sections/Anatomy';
 import { Gauge } from '../src/components/sections/Gauge';
 import { Protocol } from '../src/components/sections/Protocol';
 import { SiteFooter } from '../src/components/sections/SiteFooter';
+import { Sources } from '../src/components/sections/Sources';
 import { Standards } from '../src/components/sections/Standards';
 import { Volume } from '../src/components/sections/Volume';
 import { Workout } from '../src/components/workout/Workout';
@@ -33,13 +35,19 @@ const SECTIONS: Record<string, ReactElement> = {
   standards: <Standards />,
   gauge: <Gauge />,
   volume: <Volume />,
+  anatomy: <Anatomy />,
+  sources: <Sources />,
   footer: <SiteFooter />,
 };
 
 const INLINE = new Set(['a', 'abbr', 'b', 'br', 'code', 'em', 'i', 'mark', 'small', 'span', 'strong', 'sub', 'sup', 'u']);
 const isInline = (n: AnyNode | undefined) => !!n && (n.type === 'text' || (n.type === 'tag' && INLINE.has((n as Element).tagName)));
 
-function canon(html: string): string[] {
+/**
+ * `dropped` (original side of a ported section only): inline on* handlers are
+ * left out and collected there, since those clicks are React handlers now.
+ */
+function canon(html: string, dropped?: Set<string>): string[] {
   const $ = cheerio.load(html, null, false);
   const out: string[] = [];
   const walk = (node: AnyNode, depth: number, siblings: AnyNode[]) => {
@@ -62,6 +70,11 @@ function canon(html: string): string[] {
     if (node.type !== 'tag') return;
     const el = node as Element;
     const attrs = Object.entries(el.attribs)
+      .filter(([k, v]) => {
+        if (!dropped || !/^on[a-z]+$/.test(k)) return true;
+        dropped.add(`${k}="${v}"`);
+        return false;
+      })
       .map(([k, v]) => {
         const name = k.startsWith('data-legacy-') ? k.slice('data-legacy-'.length) : k;
         const value = name === 'style' ? v.replace(/\s+/g, '').replace(/;$/, '') : v;
@@ -77,8 +90,8 @@ function canon(html: string): string[] {
   return out;
 }
 
-function compare(name: string, original: string, rendered: string): number {
-  const a = canon(original);
+function compare(name: string, original: string, rendered: string, dropped?: Set<string>): number {
+  const a = canon(original, dropped);
   const b = canon(rendered);
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
     if (a[i] !== b[i]) {
@@ -111,6 +124,8 @@ if (missing.length || unlisted.length) {
   process.exit(1);
 }
 for (const name of ported) {
-  const count = compare(name, fragments[name], renderToStaticMarkup(SECTIONS[name]));
-  console.log(`OK ${name}: identical to the original (${count} nodes).`);
+  const dropped = new Set<string>();
+  const count = compare(name, fragments[name], renderToStaticMarkup(SECTIONS[name]), dropped);
+  const handlers = dropped.size ? `; inline handlers now in React: ${[...dropped].join(', ')}` : '';
+  console.log(`OK ${name}: identical to the original (${count} nodes${handlers}).`);
 }

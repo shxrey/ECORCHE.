@@ -43,3 +43,6 @@ next-env.d.ts
 # Playwright
 /test-results/
 /playwright-report/
+
+# Pixel-check baselines: taken per machine, never committed (npm run test:visual)
+/visual/*-snapshots/

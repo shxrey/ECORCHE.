@@ -77,12 +77,36 @@ behaviour; the new modules already behave correctly:
 
 Lowest risk: mostly content, with small interactions.
 
-- [ ] Protocol, Standards, Intensity gauge, Footer → server components.
-- [ ] Volume (animated bars + tap to highlight) → small client component.
-- [ ] Anatomy (tabs) and Sources (tabs + "show more studies").
+- [x] Protocol, Standards, Intensity gauge, Footer → server components. (25 Nov, 4981878)
+- [x] Volume (animated bars + tap to highlight) → small client component. (25 Nov, aa65660)
+- [x] Anatomy (tabs) and Sources (tabs + "show more studies"). (25 Nov)
 
 Each one ships alone: compare its rendered markup to the original (extend
 `verify:legacy`), then remove its HTML fragment and its old script section.
+
+Done 25 Nov. All seven are in `src/components/sections/`; their content (Volume cards,
+Anatomy tabs, studies) is typed data in `src/content/`. Raw HTML left on the page fell from
+95 KB to 19 KB (nav, hero, tracker, overlays). Checks: `verify:legacy` (identical markup,
+spaces included), `e2e/sections.spec.ts` (tabs, show more, bars, highlight, no console
+errors), and the pixel check below (22 screenshots identical to the pre-Phase-1 site). The
+old script keeps Volume's "N logged so far" lines until Phase 3. Two quirks kept as they
+were: the Pull tab's muscle grid doesn't fade in, and Volume cards can't be reached by
+keyboard (the redesign can fix both).
+
+### Pixel check (`npm run test:visual`)
+
+Screenshots of each ported section (desktop and phone, plus clicked states) compared
+pixel for pixel with the version before the change. Baselines are per machine and never
+committed (`visual/*-snapshots/` is ignored). To check a change:
+
+1. Build the old version in a separate folder and serve it:
+   `git worktree add --detach ../hypertrophy-baseline <commit before the change>`, then in
+   that folder `npm ci`, copy `.env.local` in, `npx next build`, `npx next start -p 3200`.
+2. `VISUAL_BASE=http://127.0.0.1:3200 npm run test:visual -- --update-snapshots` takes the
+   baselines; run it again to see they're stable.
+3. Serve the new build on 3100 (`npm run build`, `npx next start -p 3100`) and run
+   `npm run test:visual`. Add the new sections and states to `visual/pixel.spec.ts` first.
+4. Afterwards: stop both servers and `git worktree remove ../hypertrophy-baseline`.
 
 ## Phase 2: Page shell (1 session)
 

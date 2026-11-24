@@ -1,16 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { VolumeCard } from '@/content/volume';
+import { useHydrated } from './useHydrated';
 
 const DETAIL_STYLE = { fontWeight: 500, color: 'var(--ink-muted)', fontSize: '12px' };
 const ZONE_STYLE = { left: '41.67%', width: '41.67%' };
-
-const noSubscription = () => () => {};
-/** False in the server HTML and while hydrating, true once the page is live. */
-function useHydrated() {
-  return useSyncExternalStore(noSubscription, () => true, () => false);
-}
 
 /**
  * The 14 muscle cards. Each bar starts empty once the page is live and grows

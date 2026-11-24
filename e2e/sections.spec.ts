@@ -7,7 +7,9 @@ test.describe('reading sections', () => {
     const errors: string[] = [];
     page.on('console', (m) => {
       // Vercel's visitor-stats script only exists on Vercel, not on this test server.
-      if (m.type() === 'error' && !m.text().includes('/_vercel/') && !m.location().url.includes('/_vercel/')) errors.push(m.text());
+      if (m.type() === 'error' && !m.text().includes('/_vercel/') && !m.location().url.includes('/_vercel/')) {
+        errors.push(`${m.text()} (from ${m.location().url || 'unknown'})`);
+      }
     });
     page.on('pageerror', (e) => errors.push(e.message));
     await openApp(page);

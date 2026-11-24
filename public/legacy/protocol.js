@@ -1135,26 +1135,6 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     updateSessionMinibar();
   }
 
-  // ===== ANATOMY TABS =====
-  function switchAnatomyTab(group) {
-    document.querySelectorAll('#anatomyTabs .group-tab').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-tab-group') === group);
-    });
-    document.querySelectorAll('.anatomy-panel').forEach(panel => {
-      panel.classList.toggle('active', panel.getAttribute('data-group') === group);
-    });
-  }
-
-  // ===== SOURCES TABS =====
-  function switchSourcesTab(group) {
-    document.querySelectorAll('#sourcesTabs .group-tab').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-tab-group') === group);
-    });
-    document.querySelectorAll('.sources-group-panel').forEach(panel => {
-      panel.classList.toggle('active', panel.getAttribute('data-group') === group);
-    });
-  }
-
   // ===== AMBIENT PARTICLES =====
   // Skipped entirely (not just frozen) under reduced-motion: spawning 18 DOM
   // nodes that never animate still costs layout/paint for no visual benefit.
@@ -2362,24 +2342,6 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     });
   }
 
-  // ===== SOURCES ACCORDION (collapse long study lists) =====
-  function initSourcesAccordion() {
-    document.querySelectorAll('.sources-group-panel').forEach(panel => {
-      const cards = Array.from(panel.querySelectorAll('.source-card'));
-      if (cards.length <= 4) return;
-      cards.slice(3).forEach(c => c.classList.add('sources-hidden'));
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'sources-show-more';
-      btn.textContent = 'Show ' + (cards.length - 3) + ' more studies';
-      btn.onclick = () => {
-        cards.slice(3).forEach(c => c.classList.remove('sources-hidden'));
-        btn.remove();
-      };
-      panel.appendChild(btn);
-    });
-  }
-
   // ===== KIOSK / WORKOUT MODE =====
   // Distraction-free view: hides everything except the sticky mini-bar, the
   // active day's exercises (with the logger), and the floating rest timer.
@@ -2521,7 +2483,6 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   applyStoredCompletion();
   initExerciseEnhancements();
   initVolumeInteractions();
-  initSourcesAccordion();
   initKioskButtons();
   initAutoRestToggle();
   applyWeightUnit();
