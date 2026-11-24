@@ -53,11 +53,24 @@ test.describe('backups and exports', () => {
   });
 
   test("View History counts this week's sets", async ({ page }) => {
+    // A Wednesday: on Sundays the old page files the day's sets under last week (test below).
+    await page.clock.setFixedTime(new Date(2026, 10, 25, 15, 0));
     await openApp(page);
     await dot(page, 'legs-a1', 1).click();
     await dot(page, 'legs-a1', 2).click();
     await page.getByRole('button', { name: 'View History' }).click();
     await expect(page.locator('#historyModalOverlay')).toHaveClass(/open/);
     await expect(page.locator('#histThisWeek')).toContainText('2');
+  });
+
+  // Known bug, fixed in Phase 3d: the week's start keeps the current time of
+  // day, so on a Sunday afternoon that morning's sets count as last week and
+  // "this week" reads 0. (Every other day, weeks already run Monday–Sunday.)
+  test.fixme("on a Sunday, View History counts that day's sets in this week", async ({ page }) => {
+    await page.clock.setFixedTime(new Date(2026, 10, 29, 15, 0)); // Sunday
+    await openApp(page);
+    await dot(page, 'legs-a1', 1).click();
+    await page.getByRole('button', { name: 'View History' }).click();
+    await expect(page.locator('#histThisWeek')).toHaveText('1');
   });
 });

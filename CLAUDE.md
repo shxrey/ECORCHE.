@@ -12,8 +12,8 @@ npm run build
 npm run lint
 npm run typecheck       # next typegen && tsc --noEmit
 npm run test:db         # applies every migration to in-memory Postgres (PGlite), tests RLS + sync_push/sync_pull
-npm run test:sync       # node:test via tsx: sync engine, session cookie, feedback
-npm run test:e2e        # Playwright behaviour tests (e2e/): builds, serves on 127.0.0.1:3100, always signed out
+npm run test:unit       # node:test via tsx, every src/**/*.test.ts: sync engine, training rules and store, auth helpers
+npm run test:e2e        # Playwright (e2e/): builds, serves on 127.0.0.1:3100, always signed out. BACKUP_DIR=<folder> also imports those backup files
 npm run extract:legacy  # regenerates the legacy-derived files (see below)
 npm run verify:legacy   # proves React's <Workout /> renders the same DOM as reference/protocol.html
 ```
@@ -37,6 +37,8 @@ To change legacy behaviour or markup, add a string-replacement entry to the extr
 **Runtime wiring** (`src/app/page.tsx`): `LegacyFragment` sections and the React `Workout` (`src/components/workout/`) render on the server. Workout markup carries `data-legacy-onclick`/`onkeydown`, which the bootstrap turns back into inline handlers. After hydration, `LegacyRuntime` injects `/legacy/protocol.js` once per document. Any link into or out of the protocol page must therefore be a `DocumentLink` (a plain `<a>` that forces a full page load). Client-side navigation would leave the legacy UI dead.
 
 **Cloud sync** (`src/lib/sync`, `src/components/sync/CloudSync.tsx`): offline-first. The legacy app owns state in globals (`doneMap`, `logMap`, `notesMap`, `sessionsMap`, timers, prefs) persisted to localStorage. `scripts/legacy-bridge.js` exposes `window.__legacyBridge` (`readState`/`applyState`/`isBusy`) and fires `legacy:change` by wrapping the `save*` functions. The extractor asserts that every global the bridge touches exists. `model.ts` flattens state into keyed records (`c|`, `l|`, `n|`, `d|`, `t|`, `s`; mapping documented at its top). `engine.ts` diffs records against a shadow copy and queues them in an outbox (localStorage `hb_sync_v1`). It syncs through the Postgres RPCs `sync_push`/`sync_pull`, which resolve conflicts last-write-wins per record on the server, with tombstones for deletes. The engine takes injected bridge/remote/store interfaces (`adapters.ts`), so `sync.test.ts` can simulate two devices without a browser.
+
+**Training rules and store** (`src/lib/training/`, not wired into the page yet): the old script's calculations as pure typed modules (e1RM, ▲/▼, PRs, history lookups, warm-ups, progress, volume, CSV, backups) and `TrainingStore`, which reads and writes the same localStorage keys and formats as the old app. `e2e/parity.spec.ts` checks them against the running old page; where they differ on purpose (bug fixes), the spec and `docs/react-rebuild-plan.md` say so. Phase 3 of the rebuild moves the page onto them.
 
 **Auth**: passwordless email OTP (`/login`, `/auth/confirm`). `src/proxy.ts` (Next 16's name for middleware) only refreshes the session cookie. All data access control is Postgres RLS (`auth.uid() = user_id`). The Supabase JS client loads lazily (`src/lib/supabase/load.ts`), and only when a session cookie exists, to keep it off signed-out page loads.
 

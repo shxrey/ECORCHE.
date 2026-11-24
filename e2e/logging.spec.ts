@@ -67,6 +67,29 @@ test.describe('logging weight, reps and RIR', () => {
     await expect(page.locator(`#lastLog-${EX}`)).toHaveText('Last: 105kg × 8');
   });
 
+  // Known bug, fixed in Phase 3b: a re-save compares the set with its own
+  // earlier save today, so typing the RIR after a PR wipes the PR.
+  test.fixme('a PR stays a PR when the same set is edited again', async ({ page }) => {
+    await withYesterday(page);
+    await enter(page, weightBox(page, EX, 1), '110');
+    await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
+    await enter(page, row(page, EX, 1).locator('.log-rir'), '1');
+    await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
+    expect((await saved(page)).logMap[EX][today]['1']).toMatchObject({ w: '110', rir: '1', pr: true });
+  });
+
+  // Known bug, fixed in Phase 3b: the lasting "PR" tag is only drawn when the
+  // PR happens, never when the page loads, so a reload hides it.
+  test.fixme('a PR still shows its tag after a reload', async ({ page }) => {
+    await withYesterday(page);
+    await enter(page, weightBox(page, EX, 1), '110');
+    await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
+    await saved(page);
+    await reload(page);
+    await expand(page, EX);
+    await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
+  });
+
   test('warm-up steps are 50 / 75 / 90% of set 1, rounded to 2.5 kg', async ({ page }) => {
     await withYesterday(page);
     await card(page, EX).getByRole('button', { name: 'Warmup %' }).click();

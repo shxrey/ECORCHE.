@@ -1,0 +1,26 @@
+{
+  "app": "hypertrophy-blueprint",
+  "schemaVersion": 3,
+  "exportedAt": "2026-11-20T19:31:07.004Z",
+  "doneMap": {
+    "pull-b1-set1": true,
+    "pull-b1-set2": true,
+    "pull-b2-set1": true
+  },
+  "logMap": {
+    "pull-b1": {
+      "2026-11-13": { "1": { "w": "70", "r": "8", "rir": "1", "pr": false } },
+      "2026-11-20": { "1": { "w": "72.5", "r": "8", "rir": "1", "pr": true }, "2": { "w": "72.5", "r": "7", "rir": "0" } }
+    },
+    "pull-b2": {
+      "2026-11-20": { "1": { "w": "2500", "r": "8", "rir": "1" }, "2": { "w": "30", "r": "abc", "rir": "" }, "3": { "w": "30", "r": "12", "rir": "" } }
+    },
+    "legs-a8": { "2026-11-19": { "1": { "w": "50", "r": "10", "rir": "" } } }
+  },
+  "notesMap": {
+    "pull-b1": { "2026-11-20": "strap up on set 2", "2026-11-13": "" },
+    "legs-a8": { "2026-11-19": "old exercise" }
+  },
+  "sessionsMap": { "2026-11-13": 24, "2026-11-20": 3 },
+  "preferences": { "autoRestEnabled": true, "audioEnabled": false, "weightUnit": "lb" }
+}

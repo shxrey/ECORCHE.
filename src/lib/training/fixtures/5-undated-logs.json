@@ -1,0 +1,9 @@
+{
+  "app": "hypertrophy-blueprint",
+  "exportedAt": "2026-07-30T08:00:00.000Z",
+  "doneMap": { "pull-a1-set1": true },
+  "logMap": {
+    "pull-a1": { "1": { "w": "60", "r": "10", "rir": "2" }, "2": { "w": "60", "r": "9", "rir": "1" } }
+  },
+  "notesMap": { "pull-a1": "slow eccentric" }
+}

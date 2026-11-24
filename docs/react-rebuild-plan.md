@@ -45,11 +45,33 @@ Nothing visible changes. This makes every later step safe to check.
       then import, a backup; CSV header; Workout Mode, swiping days; `#pushB` survives a
       reload; high contrast and voice settings stick; the sync bridge's `readState` /
       `applyState` contract.
-- [ ] **Pure logic in typed, tested modules** (`src/lib/training/`): e1RM, the PR rule, the
+- [x] **Pure logic in typed, tested modules** (`src/lib/training/`): e1RM, the PR rule, the
       ▲/▼ rule, warm-up rounding, "last time this set" lookup, weekly counts, training week,
-      backup checking and cleaning, CSV.
-- [ ] **One typed store design** for the training state (today's `LegacyState`), reading and
-      writing the same localStorage keys, with tests that load real old backups.
+      backup checking and cleaning, CSV. Done 24 Nov: `dates`, `units`, `strength`, `history`,
+      `prescription` (rest, RIR target, warm-ups), `progress`, `volume`, `csv`, `backup`.
+      `e2e/parity.spec.ts` loads random but repeatable histories into the old page and checks
+      every card line, box, badge, count and both exports against the modules (46 exercises,
+      kg and lb).
+- [x] **One typed store design** for the training state (today's `LegacyState`), reading and
+      writing the same localStorage keys, with tests that load real old backups. Done 24 Nov:
+      `src/lib/training/store.ts` (`TrainingStore`: immutable state for
+      `useSyncExternalStore`, the same keys and formats, debounced saves, `readState` /
+      `applyState` for sync). Fixtures in every format ever exported are in
+      `src/lib/training/fixtures/`; the old page and the store read each other's saved data;
+      the 8 real backups exported in Jul–Aug 2026 import identically both ways. Run
+      `BACKUP_DIR=<folder> npm run test:e2e` to check other real files (never commit them:
+      the repo is public).
+
+Phase 0 found four more old-app bugs. Each has a parked `test.fixme` that shows the right
+behaviour; the new modules already behave correctly:
+- **PR wiped by an edit** (3b): re-saving a set compares it with its own earlier save today,
+  so typing the RIR after a PR erases it. The new rule: beat every set from earlier days.
+- **PR tag gone after a reload** (3b): the lasting "PR" tag is never drawn when the page loads.
+- **"This week" is 0 on Sundays** (3d): View History keeps the time of day in the week's
+  start. Weeks now run Monday–Sunday, which is what the old page showed the other six days.
+- **One bad date in a backup** (3d, already fixed in `backup.ts`): the old page filed that
+  exercise's whole history under today as junk sets, then failed to draw them. Now only the
+  bad day is dropped. (Only hand-edited files can have one.)
 
 ## Phase 1: Static sections (1–2 sessions)
 
@@ -77,17 +99,21 @@ you're happy, `/` switches over.
 
 - [ ] **3a. State, saving and sync:** the store replaces the old globals, the sync engine
       connects to it directly (no bridge), plus the set tracker: set dots, day and week
-      progress, ring, training-week banner, reset day and week with undo.
+      progress, ring, training-week banner, reset day and week with undo. Flush the store on
+      `visibilitychange` / `pagehide`, call `reload()` on the window `storage` event, and let
+      `src/lib/sync/device.ts` read through `loadTrainingState`.
 - [ ] **3b. Logging:** weight, reps and RIR boxes; suggestions; dated notes; "Last session";
       e1RM; trend bars; ▲/▼ badges; PRs and confetti; warm-up; kg/lb; screen-reader names.
   - Fix: only the set you actually confirm is saved, not the suggested numbers in the
     card's other rows.
   - Fix: on phones the ▲/▼ badge moves under the boxes instead of being cut off.
+  - Fix: a PR stays a PR when its set is edited again, and its tag shows after a reload.
 - [ ] **3c. Timers and Workout Mode:** rest timer, auto-rest and voice cues; session timer
       (synced); tempo pacer; the mini-bar; Workout Mode, swiping days, keeping the screen awake;
       high contrast.
 - [ ] **3d. Data tools:** history, export and import (same file format), CSV, auto-backup,
       confirm dialogs and toasts.
+  - Fix: on Sundays, View History counts that day's sets in this week.
 - [ ] Switch `/` to the new core.
 
 ## Phase 4: Clean-up (1 session)

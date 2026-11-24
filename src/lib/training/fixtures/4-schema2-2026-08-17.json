@@ -1,0 +1,17 @@
+{
+  "app": "hypertrophy-blueprint",
+  "schemaVersion": 2,
+  "exportedAt": "2026-08-17T06:02:11.845Z",
+  "doneMap": {
+    "legs-a1-set1": true,
+    "legs-a1-set3": true,
+    "legs-a8-set2": true,
+    "push-a7-set5": true
+  },
+  "logMap": {
+    "legs-a1": { "2026-08-16": { "1": { "w": "85", "r": "8", "rir": "1" } } }
+  },
+  "notesMap": { "legs-a1": "knees out on the way up", "legs-a2": "" },
+  "sessionsMap": { "2026-08-16": 21, "2026-08-17": 2 },
+  "preferences": { "autoRestEnabled": false, "audioEnabled": true }
+}
