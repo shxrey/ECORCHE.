@@ -1,10 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { loadSupabase } from '@/lib/supabase/load';
 import { useUser } from '@/lib/supabase/useUser';
-import { SyncEngine } from '@/lib/sync/engine';
-import { legacyBridge, localSyncStore, supabaseRemote, whenLegacyReady } from '@/lib/sync/adapters';
+import type { SyncEngine } from '@/lib/sync/engine';
 import { setSyncState } from '@/lib/sync/status';
 
 /** Wait this long after the last tap/keystroke before syncing, so a set of rapid edits goes up as one request. */
@@ -15,15 +14,15 @@ const POLL_MS = 45_000;
 /**
  * Runs cloud sync while a lifter is signed in on the protocol page. Renders
  * nothing: the app keeps working on its own local copy exactly as before,
- * and this quietly keeps that copy and the account in step.
+ * and this quietly keeps that copy and the account in step. The sync code
+ * and the client library are only downloaded once someone is signed in.
  */
 export function CloudSync() {
   const auth = useUser();
   const userId = auth.status === 'signed-in' ? auth.user.id : null;
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase || !userId) return;
+    if (!userId) return;
 
     let stopped = false;
     let engine: SyncEngine | null = null;
@@ -39,10 +38,12 @@ export function CloudSync() {
       cleanups.push(() => target.removeEventListener(type, fn));
     };
 
-    whenLegacyReady().then(handle => {
+    Promise.all([loadSupabase(), import('@/lib/sync/engine'), import('@/lib/sync/adapters')]).then(async ([supabase, { SyncEngine }, adapters]) => {
+      if (stopped || !supabase) return;
+      const handle = await adapters.whenLegacyReady();
       if (stopped) return;
-      engine = new SyncEngine(userId, legacyBridge(handle), supabaseRemote(supabase), localSyncStore, (status, pending) =>
-        setSyncState({ status, pending }),
+      engine = new SyncEngine(userId, adapters.legacyBridge(handle), adapters.supabaseRemote(supabase), adapters.localSyncStore,
+        (status, pending) => setSyncState({ status, pending }),
       );
       run();
 
@@ -61,7 +62,7 @@ export function CloudSync() {
         if (document.visibilityState === 'visible') run();
       }, POLL_MS);
       cleanups.push(() => clearInterval(poll));
-    });
+    }).catch(err => console.error('[sync] could not start', err));
 
     return () => {
       stopped = true;

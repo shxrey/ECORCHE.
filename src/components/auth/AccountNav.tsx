@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { DocumentLink } from '@/components/legacy/DocumentLink';
-import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+import { loadSupabase } from '@/lib/supabase/load';
 import { useUser } from '@/lib/supabase/useUser';
 import { useSyncState, type SyncState } from '@/lib/sync/status';
 
@@ -26,16 +26,16 @@ export function AccountNav() {
   const [profileName, setProfileName] = useState<{ userId: string; username: string | null } | null>(null);
 
   useEffect(() => {
-    const supabase = getSupabaseBrowserClient();
-    if (!supabase || !userId) return;
+    if (!userId) return;
     let cancelled = false;
-    supabase
-      .from('profiles')
-      .select('username')
-      .eq('id', userId)
-      .single()
-      .then(({ data }) => {
-        if (!cancelled) setProfileName({ userId, username: data?.username ?? null });
+    // Signed in, so the client library is already loaded (or loading).
+    loadSupabase()
+      .then(supabase => supabase?.from('profiles').select('username').eq('id', userId).single())
+      .then(result => {
+        if (!cancelled && result) setProfileName({ userId, username: result.data?.username ?? null });
+      })
+      .catch(() => {
+        /* no username: the pill falls back to the email name */
       });
     return () => {
       cancelled = true;
