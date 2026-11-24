@@ -39,13 +39,17 @@ jobs:
           version: 3.1.0
 
       # Supabase's own method (supabase.com/docs/guides/deployment/ci/backups).
+      # Live sign-in sessions and one-time codes are left out: they're only good for
+      # staying signed in, so after a restore everyone just signs in again.
       - name: Dump roles, schema and data
         run: |
           mkdir dump
           supabase db dump --remote="$SUPABASE_DB_URL" -f dump/roles.sql --role-only
           supabase db dump --remote="$SUPABASE_DB_URL" -f dump/schema.sql
           supabase db dump --remote="$SUPABASE_DB_URL" -f dump/data.sql --data-only --use-copy \
-            -x "storage.buckets_vectors" -x "storage.vector_indexes"
+            -x "storage.buckets_vectors" -x "storage.vector_indexes" \
+            -x "auth.sessions" -x "auth.refresh_tokens" -x "auth.mfa_amr_claims" \
+            -x "auth.one_time_tokens" -x "auth.flow_state"
 
       - name: Summary (sizes and row counts only)
         run: |

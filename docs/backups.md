@@ -5,7 +5,8 @@ The free Supabase plan has no automatic backups, so
 night at 03:00 India time:
 
 1. Copies the database with Supabase's own tool (`supabase db dump`): roles, schema and data,
-   including the sign-in accounts (`auth.users`).
+   including the sign-in accounts (`auth.users`). Live sign-in sessions and one-time codes
+   are left out, so after a restore everyone simply signs in again.
 2. Encrypts the copy with a password only you know (AES-256, `gpg`).
 3. Saves it on the workflow run as `ecorche-db-YYYY-MM-DD`, kept for **30 days**.
 4. Makes one small request to the Supabase API, so the free project never pauses for being idle.
@@ -18,7 +19,7 @@ GitHub emails you if a night's backup fails.
 
 ## One-time setup: two secrets
 
-In GitHub: **shxrey/blueprint-ppl → Settings → Secrets and variables → Actions →
+In GitHub: **shxrey/ECORCHE. → Settings → Secrets and variables → Actions →
 New repository secret**. Create both:
 
 | Name | Value |
