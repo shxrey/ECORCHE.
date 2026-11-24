@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Study } from '@/content/sources';
 import { SourceCard } from './SourceCard';
-import { useHydrated } from './useHydrated';
+import { useHydrated } from '@/lib/useHydrated';
 
 const SHOWN = 3;
 const HIDDEN = { display: 'none' } as const;

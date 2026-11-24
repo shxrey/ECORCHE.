@@ -8,24 +8,8 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   });
 });
   // ===== PROGRAM DATA =====
-  const PROGRAM = {
-    push: {
-      top: 'PUSH DAY',
-      sub: 'An evidence-based A/B split for chest, shoulders &amp; triceps — now with the triceps split into two standalone lifts and core anchored here permanently. Built on the EMG and hypertrophy research of <strong>Schoenfeld, Helms, Trebs &amp; Maeo</strong> — the same literature Jeff Nippard draws on for his own programming.',
-      ex: 8, sets: 21, muscles: 4, min: '~60'
-    },
-    pull: {
-      top: 'PULL DAY',
-      sub: 'An evidence-based A/B split for lats, mid-back, rear delts, traps &amp; biceps — now with shrugs and a heavy unilateral row added. Built on the EMG and hypertrophy research of <strong>Andersen, Oliveira, Signorile &amp; Schoenfeld</strong> — the same literature Jeff Nippard and Dr. Mike Israetel draw on for their own back &amp; arm programming.',
-      ex: 8, sets: 24, muscles: 5, min: '~68'
-    },
-    legs: {
-      top: 'LEG DAY',
-      sub: 'An evidence-based A/B split for quads, hamstrings, glutes, calves, shoulders &amp; forearms — now built around the Back Squat with leg curls dropped in favor of a 4th RDL set. Built on the muscle-length and EMG research of <strong>Maeo, Schoenfeld, Kassiano &amp; Helms</strong> — the same literature Jeff Nippard draws on for his own leg programming.',
-      ex: 7, sets: 21, muscles: 6, min: '~65'
-    }
-  };
-
+  // Each group's hero heading, description and numbers are React content now
+  // (src/content/groups.tsx).
   const SETS_PER_DAY = {
     pushA: 21, pushB: 21,
     pullA: 24, pullB: 24,
@@ -372,49 +356,19 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     renderAllVolumeCompletions(); // called at init, import, and undo — not high-frequency, so no need to debounce here
   }
 
-  // ===== GROUP SWITCH (Push / Pull / Legs) =====
-  function switchGroup(group) {
-    currentGroup = group;
-    document.body.setAttribute('data-group', group);
-
-    document.querySelectorAll('#groupTabs .group-tab').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-tab-group') === group);
-    });
-
-    const data = PROGRAM[group];
-    document.getElementById('heroTitle').innerHTML = data.top + '<br><span class="accent" id="heroAccent">PROTOCOL</span>';
-    document.getElementById('heroSubtitle').innerHTML = data.sub;
-    document.getElementById('statEx').textContent = data.ex;
-    document.getElementById('statSets').textContent = data.sets;
-    document.getElementById('statMuscles').textContent = data.muscles;
-    document.getElementById('statMin').textContent = data.min;
-
-    showCurrentDay();
-    syncHash();
-  }
-
-  // ===== DAY SWITCH (A / B) =====
+  // ===== WHICH DAY IS SHOWING =====
+  // The shown group and day live in React now (src/lib/view.ts, reached here as
+  // window.__view): the hero, the "#legsA" address and the colour theme follow
+  // it there. This code follows it too (applyView, wired up at INIT) and asks it
+  // for changes: a tracker day card (jumpToDay) or a swipe in Workout Mode.
   function switchDay(day) {
     if (navigator.vibrate) navigator.vibrate(15);
-    currentDay = day;
-    document.getElementById('btnDayA').classList.toggle('active', day === 'A');
-    document.getElementById('btnDayB').classList.toggle('active', day === 'B');
+    window.__view.showDay(day);
+  }
+  function applyView(view) {
+    currentGroup = view.group;
+    currentDay = view.day;
     showCurrentDay();
-    syncHash();
-  }
-
-  // ===== URL HASH ROUTING (survives mobile browser unload/reload) =====
-  function syncHash() {
-    try { history.replaceState(null, '', '#' + currentGroup + currentDay); } catch (e) {}
-  }
-
-  function restoreFromHash() {
-    const hash = window.location.hash.replace('#', '');
-    const match = hash.match(/^(push|pull|legs)([AB])$/i);
-    if (!match) return false;
-    switchGroup(match[1].toLowerCase());
-    switchDay(match[2].toUpperCase());
-    return true;
   }
 
   function showCurrentDay() {
@@ -435,7 +389,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       // already painted this class removal naturally.
       dayEl.querySelectorAll('.reveal').forEach(el => {
         el.classList.remove('visible');
-        observer.observe(el);
+        window.__reveal.watch(el);
       });
 
       // Restarting a CSS animation from JS does need one forced layout
@@ -455,8 +409,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   }
 
   function jumpToDay(group, day) {
-    switchGroup(group);
-    switchDay(day);
+    window.__view.show(group, day);
     const el = document.getElementById('workout');
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -1135,50 +1088,15 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     updateSessionMinibar();
   }
 
-  // ===== AMBIENT PARTICLES =====
-  // Skipped entirely (not just frozen) under reduced-motion: spawning 18 DOM
-  // nodes that never animate still costs layout/paint for no visual benefit.
-  (function spawnParticles(){
-    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const wrap = document.getElementById('heroParticles');
-    if (!wrap) return;
-    for (let i = 0; i < 18; i++) {
-      const e = document.createElement('div');
-      e.className = 'hero-particle';
-      e.style.left = (Math.random() * 100) + '%';
-      e.style.animationDuration = (6 + Math.random() * 6) + 's';
-      e.style.animationDelay = (Math.random() * 8) + 's';
-      e.style.opacity = 0.3 + Math.random() * 0.4;
-      wrap.appendChild(e);
-    }
-  })();
-
   // ===== SCROLL REVEAL =====
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('visible');
-        // One-shot reveal — stop watching once it's played. showCurrentDay()
-        // re-observes elements explicitly when a day is switched back to,
-        // so this doesn't lose the replay-on-day-switch behavior.
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  // React now (src/components/shell/reveal.ts); showCurrentDay() replays a day's
+  // fade-in through window.__reveal.
 
   document.querySelectorAll('.exercise-card').forEach((card, i) => {
     card.style.animationDelay = (i * 0.05) + 's';
   });
 
-  // ===== SMOOTH SCROLL =====
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-  });
+  // Smooth scrolling for in-page links is React now (src/components/shell/PageEffects.tsx).
 
   // ================================================================
   // ===== EVERYTHING BELOW THIS LINE IS THE NEW FEATURE BATCH =====
@@ -1212,52 +1130,12 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   }
   function saveMap(key, obj) { saveUnifiedState(); }
 
-  // ===== MOBILE HAMBURGER DRAWER =====
-  // Focus trap: while the drawer is open, Tab/Shift+Tab cycle only through
-  // its own focusable elements instead of escaping to the page underneath
-  // (which is still there, just visually covered by the drawer overlay).
-  let drawerReturnFocus = null;
-  function getFocusableIn(container) {
-    return Array.from(container.querySelectorAll(
-      'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-    )).filter(el => el.offsetParent !== null); // skip hidden elements
-  }
-  function trapDrawerTab(e) {
-    if (e.key !== 'Tab') return;
-    const drawer = document.getElementById('mobileDrawer');
-    if (!drawer || !drawer.classList.contains('open')) return;
-    const focusable = getFocusableIn(drawer);
-    if (!focusable.length) return;
-    const first = focusable[0], last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault(); last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault(); first.focus();
-    }
-  }
-  document.addEventListener('keydown', trapDrawerTab);
-
-  function toggleDrawer(force) {
-    const drawer = document.getElementById('mobileDrawer');
-    const btn = document.getElementById('hamburgerBtn');
-    const open = typeof force === 'boolean' ? force : !drawer.classList.contains('open');
-    drawer.classList.toggle('open', open);
-    btn.classList.toggle('open', open);
-    btn.setAttribute('aria-expanded', String(open));
-    document.body.style.overflow = open ? 'hidden' : '';
-    if (open) {
-      drawerReturnFocus = document.activeElement;
-      const focusable = getFocusableIn(drawer);
-      if (focusable.length) focusable[0].focus();
-    } else if (drawerReturnFocus) {
-      drawerReturnFocus.focus();
-      drawerReturnFocus = null;
-    }
-  }
+  // The phone menu is React now (src/components/shell/TopNav.tsx).
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const drawer = document.getElementById('mobileDrawer');
-      if (drawer && drawer.classList.contains('open')) { toggleDrawer(false); return; }
+      // The phone menu closes itself (src/components/shell/TopNav.tsx).
+      if (drawer && drawer.classList.contains('open')) return;
       const openModal = document.querySelector('.app-modal-overlay.open');
       if (openModal) { openModal.classList.remove('open'); return; }
       if (kioskActive) exitKioskMode();
@@ -2477,9 +2355,8 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   }
 
   // ===== INIT =====
-  if (!restoreFromHash()) {
-    switchGroup('legs');
-  }
+  applyView(window.__view.get());
+  window.__view.subscribe(() => applyView(window.__view.get()));
   applyStoredCompletion();
   initExerciseEnhancements();
   initVolumeInteractions();
@@ -2492,7 +2369,6 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   updateActiveDayIndicator();
   updateSessionMinibar();
 
-  window.addEventListener('hashchange', restoreFromHash);
 
   // ===== KIOSK-MODE SWIPE NAVIGATION (Day A <-> Day B) =====
   // Gated on document.body's kiosk-mode class rather than adding/removing

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { VolumeCard } from '@/content/volume';
-import { useHydrated } from './useHydrated';
+import { useHydrated } from '@/lib/useHydrated';
 
 const DETAIL_STYLE = { fontWeight: 500, color: 'var(--ink-muted)', fontSize: '12px' };
 const ZONE_STYLE = { left: '41.67%', width: '41.67%' };

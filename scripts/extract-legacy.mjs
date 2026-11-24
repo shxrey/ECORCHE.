@@ -272,9 +272,6 @@ const patches = [
   // Loaded after hydration, so DOMContentLoaded may already have fired.
   ["document.addEventListener('DOMContentLoaded', initSessionTimerUI);",
    "if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initSessionTimerUI); else initSessionTimerUI();"],
-  // Rebrand: the hero heading is rewritten on every day switch (see fragments above).
-  [`'<br><span class="accent" id="heroAccent">BLUEPRINT</span>'`,
-   `'<br><span class="accent" id="heroAccent">PROTOCOL</span>'`],
   // Bug fix: Workout Mode keeps the screen awake, but the OS drops that lock
   // whenever you switch apps, and it was never taken again on return, so the
   // phone could sleep mid-workout after checking music or a message.
@@ -381,6 +378,22 @@ const patches = [
    `      refreshSessionTimerDisplay();\n` +
    `    }\n` +
    `  };\n`],
+  // ---- Phase 2: which day is showing lives in React (src/lib/view.ts, window.__view) ----
+  // A day switch replays that day's fade-in through React's scroll reveal.
+  ["        el.classList.remove('visible');\n        observer.observe(el);\n",
+   "        el.classList.remove('visible');\n        window.__reveal.watch(el);\n"],
+  // A tracker day card asks the view store for its day.
+  ['    switchGroup(group);\n    switchDay(day);\n', '    window.__view.show(group, day);\n'],
+  // Escape: the phone menu closes itself (TopNav.tsx); with it open, nothing else closes.
+  ["      if (drawer && drawer.classList.contains('open')) { toggleDrawer(false); return; }\n",
+   "      // The phone menu closes itself (src/components/shell/TopNav.tsx).\n" +
+   "      if (drawer && drawer.classList.contains('open')) return;\n"],
+  // On load, show the store's day (from the address, else Legs A) and follow it from then on.
+  ["  if (!restoreFromHash()) {\n    switchGroup('legs');\n  }\n",
+   '  applyView(window.__view.get());\n' +
+   '  window.__view.subscribe(() => applyView(window.__view.get()));\n'],
+  // The address is followed by React (src/components/shell/PageEffects.tsx).
+  ["  window.addEventListener('hashchange', restoreFromHash);\n", ''],
 ];
 for (const [from, to] of patches) {
   // Exactly one match, so a patch can never land somewhere unintended.
@@ -407,6 +420,37 @@ const cuts = [
   ['  // ===== ANATOMY TABS =====\n', '  // ===== AMBIENT PARTICLES =====', ''],
   ['  // ===== SOURCES ACCORDION (collapse long study lists) =====\n', '  // ===== KIOSK / WORKOUT MODE =====', ''],
   ['  initSourcesAccordion();\n', '  initKioskButtons();', ''],
+  // ---- Phase 2: the page shell is React (src/components/shell/) ----
+  ['  // ===== PROGRAM DATA =====\n', '  const SETS_PER_DAY = {',
+   '  // ===== PROGRAM DATA =====\n' +
+   "  // Each group's hero heading, description and numbers are React content now\n" +
+   '  // (src/content/groups.tsx).\n'],
+  ['  // ===== GROUP SWITCH (Push / Pull / Legs) =====\n', '  function showCurrentDay() {',
+   '  // ===== WHICH DAY IS SHOWING =====\n' +
+   '  // The shown group and day live in React now (src/lib/view.ts, reached here as\n' +
+   '  // window.__view): the hero, the "#legsA" address and the colour theme follow\n' +
+   '  // it there. This code follows it too (applyView, wired up at INIT) and asks it\n' +
+   '  // for changes: a tracker day card (jumpToDay) or a swipe in Workout Mode.\n' +
+   '  function switchDay(day) {\n' +
+   '    if (navigator.vibrate) navigator.vibrate(15);\n' +
+   '    window.__view.showDay(day);\n' +
+   '  }\n' +
+   '  function applyView(view) {\n' +
+   '    currentGroup = view.group;\n' +
+   '    currentDay = view.day;\n' +
+   '    showCurrentDay();\n' +
+   '  }\n\n'],
+  // Particles (Hero.tsx), scroll reveal (reveal.ts), smooth scrolling (PageEffects.tsx).
+  ['  // ===== AMBIENT PARTICLES =====\n', '  // ===== SCROLL REVEAL =====', ''],
+  ['  // ===== SCROLL REVEAL =====\n', "  document.querySelectorAll('.exercise-card').forEach((card, i) => {\n    card.style.animationDelay",
+   '  // ===== SCROLL REVEAL =====\n' +
+   '  // React now (src/components/shell/reveal.ts); showCurrentDay() replays a day\'s\n' +
+   '  // fade-in through window.__reveal.\n\n'],
+  ['  // ===== SMOOTH SCROLL =====\n', '  // ================================================================\n  // ===== EVERYTHING BELOW THIS LINE',
+   '  // Smooth scrolling for in-page links is React now (src/components/shell/PageEffects.tsx).\n\n'],
+  // The phone menu: TopNav.tsx.
+  ['  // ===== MOBILE HAMBURGER DRAWER =====\n', "  document.addEventListener('keydown', (e) => {\n    if (e.key === 'Escape') {",
+   '  // The phone menu is React now (src/components/shell/TopNav.tsx).\n'],
 ];
 for (const [start, end, replacement] of cuts) {
   const s = js.indexOf(start);

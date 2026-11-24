@@ -26,11 +26,21 @@ import { SiteFooter } from '../src/components/sections/SiteFooter';
 import { Sources } from '../src/components/sections/Sources';
 import { Standards } from '../src/components/sections/Standards';
 import { Volume } from '../src/components/sections/Volume';
+import { Hero } from '../src/components/shell/Hero';
+import { SessionMinibar } from '../src/components/shell/SessionMinibar';
+import { TopNav } from '../src/components/shell/TopNav';
 import { Workout } from '../src/components/workout/Workout';
 import { legacyFragments, PORTED } from './legacy-fragments.mjs';
 
 /** The React component for each ported fragment. */
 const SECTIONS: Record<string, ReactElement> = {
+  nav: (
+    <>
+      <TopNav />
+      <SessionMinibar />
+    </>
+  ),
+  hero: <Hero />,
   protocol: <Protocol />,
   standards: <Standards />,
   gauge: <Gauge />,
@@ -43,11 +53,7 @@ const SECTIONS: Record<string, ReactElement> = {
 const INLINE = new Set(['a', 'abbr', 'b', 'br', 'code', 'em', 'i', 'mark', 'small', 'span', 'strong', 'sub', 'sup', 'u']);
 const isInline = (n: AnyNode | undefined) => !!n && (n.type === 'text' || (n.type === 'tag' && INLINE.has((n as Element).tagName)));
 
-/**
- * `dropped` (original side of a ported section only): inline on* handlers are
- * left out and collected there, since those clicks are React handlers now.
- */
-function canon(html: string, dropped?: Set<string>): string[] {
+function canon(html: string): string[] {
   const $ = cheerio.load(html, null, false);
   const out: string[] = [];
   const walk = (node: AnyNode, depth: number, siblings: AnyNode[]) => {
@@ -70,18 +76,13 @@ function canon(html: string, dropped?: Set<string>): string[] {
     if (node.type !== 'tag') return;
     const el = node as Element;
     const attrs = Object.entries(el.attribs)
-      .filter(([k, v]) => {
-        if (!dropped || !/^on[a-z]+$/.test(k)) return true;
-        dropped.add(`${k}="${v}"`);
-        return false;
-      })
       .map(([k, v]) => {
         const name = k.startsWith('data-legacy-') ? k.slice('data-legacy-'.length) : k;
         const value = name === 'style' ? v.replace(/\s+/g, '').replace(/;$/, '') : v;
-        return `${name}="${value}"`;
+        return ` ${name}="${value}"`;
       })
       .sort();
-    out.push(pad + `<${el.tagName} ${attrs.join(' ')}>`);
+    out.push(pad + `<${el.tagName}${attrs.join('')}>`);
     const kids = el.children.filter((c) => c.type !== 'comment');
     kids.forEach((c) => walk(c, depth + 1, kids));
   };
@@ -90,11 +91,21 @@ function canon(html: string, dropped?: Set<string>): string[] {
   return out;
 }
 
-function compare(name: string, original: string, rendered: string, dropped?: Set<string>): number {
-  const a = canon(original, dropped);
+/**
+ * `moved` (ported sections only): an element may lose its inline on* handlers
+ * when that click is a React handler now; they're collected there. Handlers
+ * the old script still runs (data-legacy-on*) must match exactly.
+ */
+function compare(name: string, original: string, rendered: string, moved?: Set<string>): number {
+  const a = canon(original);
   const b = canon(rendered);
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
     if (a[i] !== b[i]) {
+      const handlers = moved ? (a[i]?.match(/ on[a-z]+="[^"]*"/g) ?? []) : [];
+      if (handlers.length && handlers.reduce((line, h) => line.replace(h, ''), a[i]) === b[i]) {
+        handlers.forEach((h) => moved!.add(h.trim()));
+        continue;
+      }
       console.error(`${name}: MISMATCH at node ${i}:`);
       console.error('  original:', a[i]);
       console.error('  rendered:', b[i]);
@@ -124,8 +135,8 @@ if (missing.length || unlisted.length) {
   process.exit(1);
 }
 for (const name of ported) {
-  const dropped = new Set<string>();
-  const count = compare(name, fragments[name], renderToStaticMarkup(SECTIONS[name]), dropped);
-  const handlers = dropped.size ? `; inline handlers now in React: ${[...dropped].join(', ')}` : '';
+  const moved = new Set<string>();
+  const count = compare(name, fragments[name], renderToStaticMarkup(SECTIONS[name]), moved);
+  const handlers = moved.size ? `; inline handlers now in React: ${[...moved].join(', ')}` : '';
   console.log(`OK ${name}: identical to the original (${count} nodes${handlers}).`);
 }

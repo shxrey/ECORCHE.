@@ -10,6 +10,10 @@ import { SiteFooter } from '@/components/sections/SiteFooter';
 import { Sources } from '@/components/sections/Sources';
 import { Standards } from '@/components/sections/Standards';
 import { Volume } from '@/components/sections/Volume';
+import { Hero } from '@/components/shell/Hero';
+import { PageEffects } from '@/components/shell/PageEffects';
+import { SessionMinibar } from '@/components/shell/SessionMinibar';
+import { TopNav } from '@/components/shell/TopNav';
 import { CloudSync } from '@/components/sync/CloudSync';
 import { Workout } from '@/components/workout/Workout';
 
@@ -18,13 +22,15 @@ export const metadata: Metadata = { alternates: { canonical: '/' } };
 
 /**
  * The long-scroll blueprint, in the original order. Sections still rendered
- * from LegacyFragment get ported to React components one at a time.
+ * from LegacyFragment (the tracker, the pop-ups) move to React with the
+ * training core (docs/react-rebuild-plan.md, Phase 3).
  */
 export default function Home() {
   return (
     <>
-      <LegacyFragment name="nav" />
-      <LegacyFragment name="hero" />
+      <TopNav />
+      <SessionMinibar />
+      <Hero />
       <LegacyFragment name="tracker" />
       <Protocol />
       <Standards />
@@ -35,6 +41,7 @@ export default function Home() {
       <Sources />
       <SiteFooter />
       <LegacyFragment name="overlays" />
+      <PageEffects />
       <LegacyRuntime />
       <AccountNav />
       <CloudSync />

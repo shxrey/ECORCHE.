@@ -103,17 +103,37 @@ committed (`visual/*-snapshots/` is ignored). To check a change:
    `git worktree add --detach ../hypertrophy-baseline <commit before the change>`, then in
    that folder `npm ci`, copy `.env.local` in, `npx next build`, `npx next start -p 3200`.
 2. `VISUAL_BASE=http://127.0.0.1:3200 npm run test:visual -- --update-snapshots` takes the
-   baselines; run it again to see they're stable.
+   baselines; run it again to see they're stable. Take them the same day you compare:
+   this laptop's text rendering shifted slightly overnight once (25 Nov), so day-old
+   baselines failed even against the unchanged site.
 3. Serve the new build on 3100 (`npm run build`, `npx next start -p 3100`) and run
    `npm run test:visual`. Add the new sections and states to `visual/pixel.spec.ts` first.
 4. Afterwards: stop both servers and `git worktree remove ../hypertrophy-baseline`.
 
+`verify:legacy` can't see CSS: a space between two `div`s only shows if they're styled to
+sit inline (the hero's badge and tabs are). That one was caught by this pixel check.
+
 ## Phase 2: Page shell (1 session)
 
-- [ ] Top nav, phone menu, smooth scrolling, scroll reveal, background particles.
-- [ ] Hero: Push / Pull / Legs and Day A / B switching, and the `#legsA` address routing.
-- [ ] A small view store (which group and day is showing), which the remaining old code
+- [x] Top nav, phone menu, smooth scrolling, scroll reveal, background particles. (25 Nov)
+- [x] Hero: Push / Pull / Legs and Day A / B switching, and the `#legsA` address routing.
+- [x] A small view store (which group and day is showing), which the remaining old code
       reads through the bridge until Phase 3 replaces it.
+
+Done 25 Nov. `src/components/shell/`: `TopNav` (nav and phone menu), `Hero`, `SessionMinibar`
+(markup only; the old script still runs it until 3c), `PageEffects` (colour theme, address,
+fade-ins, smooth scrolling) and `reveal.ts`. The view store is `src/lib/view.ts`; the old
+script reaches it as `window.__view` (follows it with `applyView`, asks it for changes from
+the tracker's day cards and Workout Mode swipes) and replays a day's fade-in through
+`window.__reveal`. `LegacyRuntime` hands both over before the script loads. Raw HTML left:
+the tracker and the pop-ups (12.7 KB), which move with the training core.
+
+Checks: `verify:legacy` (nav and hero identical; it reports which inline handlers moved to
+React), `e2e/shell.spec.ts` (13 tests, also run against the old site), and the pixel check
+(35 screenshots identical, including the nav, phone menu, mini-bar and four hero states).
+Two small behaviour changes, both deliberate: tapping the day that's already showing no
+longer replays its cards' animation or hides a running rest timer; and the phone only buzzes
+on a real tap, not on page load (that load-time buzz was the console error Chrome logged).
 
 ## Phase 3: The training core (3–4 sessions, at a hidden preview address first)
 
