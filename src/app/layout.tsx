@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Anton, Inter, JetBrains_Mono } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 import '@/styles/protocol.css';
 import '@/styles/overrides.css';
 import { SITE_URL } from '@/lib/site';
@@ -50,6 +51,8 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
       {/* The legacy runtime mutates body classes/attributes after hydration. */}
       <body data-group="legs" suppressHydrationWarning>
         {children}
+        {/* Anonymous, cookie-free visit counts (Vercel Web Analytics); described on /privacy. */}
+        <Analytics />
       </body>
     </html>
   );

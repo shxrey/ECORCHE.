@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 };
 
 /*
- * Keep this page true. When something changes (a new service, analytics,
- * the in-app "Delete account" button), update the text and LEGAL_UPDATED.
+ * Keep this page true. When something changes (a new service, new data, a
+ * new analytics feature), update the text and LEGAL_UPDATED.
  */
 export default function PrivacyPage() {
   return (
@@ -20,8 +20,8 @@ export default function PrivacyPage() {
       summary={
         <p>
           <strong>Short version:</strong> we collect only what&apos;s needed to run ÉCORCHÉ. Without an account, nothing leaves
-          your device. With one, your email and training data are stored so they can sync. No ads, no trackers, and we never
-          sell your data.
+          your device. With one, your email and training data are stored so they can sync. We count visits anonymously,
+          without cookies. No ads, no cross-site trackers, and we never sell your data.
         </p>
       }
     >
@@ -52,6 +52,12 @@ export default function PrivacyPage() {
         Our hosting provider automatically processes standard technical data, such as IP address, browser type, the page
         requested and the time, to deliver the site and protect it from abuse.
       </p>
+      <p>
+        We also count visits with Vercel Web Analytics, which gives us anonymous totals: which pages were viewed, the site
+        a visitor came from, their country, and their browser, operating system and type of device. It uses no cookies and
+        doesn&apos;t identify you or follow you to other sites. Visitors are told apart only by a temporary code worked
+        out from the request, which is thrown away within 24 hours.
+      </p>
       <h3>If you email us</h3>
       <p>Your email address and whatever you write, so we can reply.</p>
       <p>
@@ -65,17 +71,19 @@ export default function PrivacyPage() {
         <li>To send sign-in codes. We don&apos;t send newsletters or marketing.</li>
         <li>To answer messages you send us.</li>
         <li>To keep ÉCORCHÉ secure and working, for example by blocking abuse.</li>
+        <li>To see, in anonymous totals, how many people use ÉCORCHÉ and which pages they visit.</li>
       </ul>
       <p>
-        We don&apos;t sell, rent or share your information for advertising. We don&apos;t run ads, analytics trackers or
-        third-party tracking scripts, and we don&apos;t use your data to train AI models.
+        We don&apos;t sell, rent or share your information for advertising. We don&apos;t run ads, advertising or
+        cross-site tracking scripts; our only analytics are the anonymous visit counts described above. We don&apos;t
+        use your data to train AI models.
       </p>
 
       <h2>3. Who processes it, and where</h2>
       <p>We use a few trusted services to run ÉCORCHÉ. Each one only handles what it needs to do its job for us:</p>
       <ul>
         <li><strong>Supabase</strong>: database and sign-in. Your account and training data are stored in <strong>Mumbai, India</strong>.</li>
-        <li><strong>Vercel</strong>: hosts the website on a global network, including servers in the United States.</li>
+        <li><strong>Vercel</strong>: hosts the website on a global network, including servers in the United States, and provides our anonymous visit counts.</li>
         <li><strong>Resend</strong>: sends sign-in emails, from servers in Japan.</li>
         <li><strong>ImprovMX</strong>: forwards emails sent to {SUPPORT_EMAIL} to our inbox.</li>
       </ul>
@@ -107,6 +115,7 @@ export default function PrivacyPage() {
       <ul>
         <li><strong>Account and training data:</strong> for as long as you have an account. When you delete it, it&apos;s removed from our database straight away.</li>
         <li><strong>Technical logs:</strong> kept by our hosting provider for a short period, then deleted automatically.</li>
+        <li><strong>Visit counts:</strong> anonymous totals only; the temporary visitor code is thrown away within 24 hours.</li>
         <li><strong>Emails you send us:</strong> for as long as needed to help you.</li>
       </ul>
 
