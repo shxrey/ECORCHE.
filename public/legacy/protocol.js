@@ -388,8 +388,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       // asynchronously on its own frame, well after the browser has
       // already painted this class removal naturally.
       dayEl.querySelectorAll('.reveal').forEach(el => {
-        el.classList.remove('visible');
-        window.__reveal.watch(el);
+        window.__reveal.replay(el);
       });
 
       // Restarting a CSS animation from JS does need one forced layout

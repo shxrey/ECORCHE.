@@ -26,6 +26,10 @@ import { SiteFooter } from '../src/components/sections/SiteFooter';
 import { Sources } from '../src/components/sections/Sources';
 import { Standards } from '../src/components/sections/Standards';
 import { Volume } from '../src/components/sections/Volume';
+import { Overlays } from '../src/components/overlays/Overlays';
+import { Tracker } from '../src/components/training/Tracker';
+import { TrainingMinibar } from '../src/components/training/TrainingMinibar';
+import { TrainingWorkout } from '../src/components/training/TrainingWorkout';
 import { Hero } from '../src/components/shell/Hero';
 import { SessionMinibar } from '../src/components/shell/SessionMinibar';
 import { TopNav } from '../src/components/shell/TopNav';
@@ -139,4 +143,26 @@ for (const name of ported) {
   const count = compare(name, fragments[name], renderToStaticMarkup(SECTIONS[name]), moved);
   const handlers = moved.size ? `; inline handlers now in React: ${[...moved].join(', ')}` : '';
   console.log(`OK ${name}: identical to the original (${count} nodes${handlers}).`);
+}
+
+// The rebuilt training core (/preview): its server HTML must be the original page's too.
+const PREVIEW: Record<string, { original: string; element: ReactElement }> = {
+  'nav + session bar': {
+    original: fragments.nav,
+    element: (
+      <>
+        <TopNav />
+        <TrainingMinibar />
+      </>
+    ),
+  },
+  tracker: { original: fragments.tracker, element: <Tracker /> },
+  'volume (live counts)': { original: fragments.volume, element: <Volume liveCounts /> },
+  workout: { original: workoutHtml, element: <TrainingWorkout /> },
+  'pop-ups': { original: fragments.overlays, element: <Overlays /> },
+};
+for (const [name, { original, element }] of Object.entries(PREVIEW)) {
+  const moved = new Set<string>();
+  const count = compare(`/preview ${name}`, original, renderToStaticMarkup(element), moved);
+  console.log(`OK /preview ${name}: identical to the original (${count} nodes; ${moved.size} kinds of inline handler now in React).`);
 }

@@ -141,11 +141,34 @@ Built at `/preview` (hidden from search), so you can use it on your phone while 
 keeps today's version. Both read the same saved data. When the behaviour tests pass and
 you're happy, `/` switches over.
 
-- [ ] **3a. State, saving and sync:** the store replaces the old globals, the sync engine
+- [x] **3a. State, saving and sync:** the store replaces the old globals, the sync engine
       connects to it directly (no bridge), plus the set tracker: set dots, day and week
       progress, ring, training-week banner, reset day and week with undo. Flush the store on
       `visibilitychange` / `pagehide`, call `reload()` on the window `storage` event, and let
       `src/lib/sync/device.ts` read through `loadTrainingState`.
+  - Done 25 Nov. `/preview` (`src/app/preview/page.tsx`, not crawled or indexed, a "Preview"
+    label in the corner) runs on the training store; the old script doesn't load there, so
+    the two never write the data at once. `src/lib/training/client.ts` holds the page's
+    store and `useTraining(select)`; `TrainingRuntime` saves on hide, reloads on another
+    tab's save, warns once when storage is full, applies high contrast. New components in
+    `src/components/training/`: `Tracker`, `TrainingWorkout` (days, cards opening one at a
+    time, set buttons, day ring, Reset Day), `TrainingMinibar` (day, progress, voice and
+    contrast switches) and `confetti.ts`; `src/components/overlays/` has the pop-ups
+    (`Overlays`, with toasts, "Are you sure?", the "?" reference and the announcer in
+    `feedback.ts`). Volume's "N logged so far" lines come from the store there
+    (`<Volume liveCounts />`). `CloudSync source="store"` syncs through `trainingStoreBridge`.
+  - The scroll reveal also marks elements with `data-revealed` (same effect, in
+    `overrides.css`), so React components can change an element's classes freely.
+  - Fix: an exercise with every set ticked keeps its "complete" mark after a reload (the old
+    page only marked it on a tap or in Workout Mode).
+  - Checks: `verify:legacy` (its server HTML is the original page's), the "preview" project
+    in `playwright.config.ts` (30 tests there, including `e2e/preview.spec.ts`: random
+    histories show right, and each page reads exactly what the other saved), and the pixel
+    check's "preview" project (identical to the live page, except the session bar's "00:00"
+    timer, which comes with 3c).
+  - Waiting on later steps, so they do nothing on `/preview` yet: the log boxes (3b), the rest
+    timer, tempo pacer, Workout Mode and the session timer (3c), and View History, Export,
+    Import and Auto-Backup (3d).
 - [ ] **3b. Logging:** weight, reps and RIR boxes; suggestions; dated notes; "Last session";
       e1RM; trend bars; ▲/▼ badges; PRs and confetti; warm-up; kg/lb; screen-reader names.
   - Fix: only the set you actually confirm is saved, not the suggested numbers in the

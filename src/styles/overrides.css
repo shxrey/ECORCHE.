@@ -48,3 +48,15 @@
 .site-footer .footer-links { margin-top: 14px; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 12.5px; font-weight: 600; }
 .site-footer .footer-links a { color: var(--ink-muted); text-decoration: none; }
 .site-footer .footer-links a:hover, .site-footer .footer-links a:focus-visible { color: var(--accent-bright); }
+
+/* Scroll reveal, second marker (src/components/shell/reveal.ts): the same
+   effect as .reveal.visible, on an attribute React never rewrites, so a
+   revealed element stays shown when a component changes its class. */
+.reveal[data-revealed] { opacity: 1; transform: translateY(0); }
+
+/* The hidden /preview build's corner label (src/app/preview/page.tsx). */
+.preview-badge {
+  position: fixed; left: 10px; bottom: 10px; z-index: 900; padding: 4px 10px; border-radius: 999px;
+  background: var(--bg-elevated); border: 1px solid var(--border-strong); color: var(--ink-muted);
+  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none;
+}

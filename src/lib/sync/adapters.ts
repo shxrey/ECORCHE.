@@ -76,14 +76,49 @@ declare global {
   }
 }
 
+/** True while the lifter is typing in the workout, so a pull never yanks a box out from under them. */
+function typingInWorkout(): boolean {
+  const el = document.activeElement;
+  return !!el && el.matches('input, textarea') && !!el.closest('.exercise-card, #workout');
+}
+
 export function legacyBridge(handle: LegacyBridgeHandle): SyncBridge {
   return {
     readState: () => handle.readState(),
     applyState: state => handle.applyState(state),
-    isBusy: () => {
-      const el = document.activeElement;
-      return !!el && el.matches('input, textarea') && !!el.closest('.exercise-card, #workout');
+    isBusy: typingInWorkout,
+  };
+}
+
+/** The parts of the training store (src/lib/training/store.ts) sync needs. */
+interface TrainingStoreHandle {
+  readState(): LegacyState;
+  applyState(state: LegacyState): void;
+  subscribe(listener: () => void): () => void;
+}
+
+/**
+ * The rebuilt training core's store, connected directly (no legacy bridge).
+ * `onChange` reports the lifter's own changes, not the ones sync applies.
+ */
+export function trainingStoreBridge(store: TrainingStoreHandle): { bridge: SyncBridge; onChange(listener: () => void): () => void } {
+  let applying = false;
+  return {
+    bridge: {
+      readState: () => store.readState(),
+      applyState: state => {
+        applying = true;
+        try {
+          store.applyState(state);
+        } finally {
+          applying = false;
+        }
+      },
+      isBusy: typingInWorkout,
     },
+    onChange: listener => store.subscribe(() => {
+      if (!applying) listener();
+    }),
   };
 }
 

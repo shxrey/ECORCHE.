@@ -381,7 +381,7 @@ const patches = [
   // ---- Phase 2: which day is showing lives in React (src/lib/view.ts, window.__view) ----
   // A day switch replays that day's fade-in through React's scroll reveal.
   ["        el.classList.remove('visible');\n        observer.observe(el);\n",
-   "        el.classList.remove('visible');\n        window.__reveal.watch(el);\n"],
+   "        window.__reveal.replay(el);\n"],
   // A tracker day card asks the view store for its day.
   ['    switchGroup(group);\n    switchDay(day);\n', '    window.__view.show(group, day);\n'],
   // Escape: the phone menu closes itself (TopNav.tsx); with it open, nothing else closes.

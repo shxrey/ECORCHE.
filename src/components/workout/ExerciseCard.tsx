@@ -82,7 +82,7 @@ export function ExerciseCard({ exercise: ex }: { exercise: Exercise }) {
   );
 }
 
-function MetaPill({ className, label, value }: { className: string; label: string; value: string }) {
+export function MetaPill({ className, label, value }: { className: string; label: string; value: string }) {
   return (
     <div className={className}>
       <span className="label">{label}</span>
@@ -91,7 +91,7 @@ function MetaPill({ className, label, value }: { className: string; label: strin
   );
 }
 
-function DetailBlockView({ block }: { block: DetailBlock }) {
+export function DetailBlockView({ block }: { block: DetailBlock }) {
   return (
     <div className="detail-block">
       {block.heading !== null ? <h4>{block.heading}</h4> : null}

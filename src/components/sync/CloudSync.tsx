@@ -16,8 +16,12 @@ const POLL_MS = 45_000;
  * nothing: the app keeps working on its own local copy exactly as before,
  * and this quietly keeps that copy and the account in step. The sync code
  * and the client library are only downloaded once someone is signed in.
+ *
+ * `source`: whose data to sync. "legacy" (the live page) waits for the old
+ * script's bridge; "store" (the rebuilt training core, /preview) uses the
+ * training store directly.
  */
-export function CloudSync() {
+export function CloudSync({ source = 'legacy' }: { source?: 'legacy' | 'store' }) {
   const auth = useUser();
   const userId = auth.status === 'signed-in' ? auth.user.id : null;
 
@@ -40,17 +44,26 @@ export function CloudSync() {
 
     Promise.all([loadSupabase(), import('@/lib/sync/engine'), import('@/lib/sync/adapters')]).then(async ([supabase, { SyncEngine }, adapters]) => {
       if (stopped || !supabase) return;
-      const handle = await adapters.whenLegacyReady();
+      const onEdit = () => {
+        clearTimeout(debounce);
+        debounce = setTimeout(run, CHANGE_DEBOUNCE_MS);
+      };
+      let bridge;
+      if (source === 'store') {
+        const { trainingStore } = await import('@/lib/training/client');
+        const connected = adapters.trainingStoreBridge(trainingStore());
+        bridge = connected.bridge;
+        cleanups.push(connected.onChange(onEdit));
+      } else {
+        bridge = adapters.legacyBridge(await adapters.whenLegacyReady());
+        on(window, 'legacy:change', onEdit);
+      }
       if (stopped) return;
-      engine = new SyncEngine(userId, adapters.legacyBridge(handle), adapters.supabaseRemote(supabase), adapters.localSyncStore,
+      engine = new SyncEngine(userId, bridge, adapters.supabaseRemote(supabase), adapters.localSyncStore,
         (status, pending) => setSyncState({ status, pending }),
       );
       run();
 
-      on(window, 'legacy:change', () => {
-        clearTimeout(debounce);
-        debounce = setTimeout(run, CHANGE_DEBOUNCE_MS);
-      });
       on(window, 'online', run);
       on(document, 'visibilitychange', () => {
         if (document.visibilityState === 'visible') run();
@@ -70,7 +83,7 @@ export function CloudSync() {
       cleanups.forEach(c => c());
       setSyncState({ status: 'off', pending: 0 });
     };
-  }, [userId]);
+  }, [userId, source]);
 
   return null;
 }

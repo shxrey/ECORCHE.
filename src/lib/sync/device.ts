@@ -1,6 +1,7 @@
 'use client';
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { loadTrainingState } from '@/lib/training/store';
 import { localSyncStore, supabaseRemote } from './adapters';
 import { SyncEngine, type SyncBridge } from './engine';
 import type { LegacyState } from './model';
@@ -22,44 +23,14 @@ const PROGRESS_KEYS = [
   'hb_sync_backup_v1',
 ];
 
-function read(key: string): unknown {
-  try {
-    return JSON.parse(localStorage.getItem(key) ?? 'null');
-  } catch {
-    return null;
-  }
-}
-
-const asMap = <T,>(v: unknown): Record<string, T> => (v && typeof v === 'object' ? (v as Record<string, T>) : {});
-
-/** The progress saved on this device, read the way the legacy app loads it (for pages where it isn't running). */
+/**
+ * The progress saved on this device, read the way the app loads it (for
+ * pages where it isn't running). Includes running workout timers: without
+ * them, signing out would look like a reset and clear a timer still running
+ * on the lifter's other device.
+ */
 function readSavedState(): LegacyState {
-  const unified = read('hb_state_v1') as Partial<LegacyState> | null;
-  const maps = unified && typeof unified === 'object'
-    ? unified
-    : { doneMap: read('hb_completed_sets_v1'), logMap: read('hb_logMap_v1'), notesMap: read('hb_notesMap_v1'), sessionsMap: read('hb_sessions_v1') };
-  const flag = (key: string, fallback: boolean) => {
-    const v = read(key);
-    return v === null ? fallback : !!v;
-  };
-  const week = Number.parseInt(localStorage.getItem('hb_mesocycleWeek_v1') ?? '', 10);
-  return {
-    doneMap: asMap(maps.doneMap),
-    logMap: asMap(maps.logMap),
-    notesMap: asMap(maps.notesMap),
-    sessionsMap: asMap(maps.sessionsMap),
-    // Running workout timers: without them, signing out would look like a
-    // reset and clear a timer still running on the lifter's other device.
-    timers: asMap(read('hb_sessionTimerStarts_v1')),
-    prefs: {
-      autoRest: flag('hb_autoRest_v1', true),
-      audio: flag('hb_audioEnabled_v1', true),
-      highContrast: flag('hb_highContrast_v1', false),
-      mesocycleWeek: week >= 1 && week <= 6 ? week : 1,
-      // Stored as plain text ('kg' / 'lb'), not JSON.
-      unit: localStorage.getItem('hb_weightUnit_v1') === 'lb' ? 'lb' : 'kg',
-    },
-  };
+  return loadTrainingState(localStorage).state;
 }
 
 /**

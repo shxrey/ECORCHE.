@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { openApp } from './helpers';
+import { appPath, openApp } from './helpers';
 
 /** The page around the workout: hero, which day is showing, nav, phone menu, scrolling effects. */
 
@@ -33,14 +33,14 @@ test.describe('hero and the day that is showing', () => {
   });
 
   test('before the page comes alive, the hero describes the whole program', async ({ request }) => {
-    const html = await (await request.get('/')).text();
+    const html = await (await request.get(appPath())).text();
     expect(html).toMatch(/id="heroSubtitle">An evidence-based 6-day Push \/ Pull \/ Legs A-B split/);
     expect(html).toMatch(/id="heroTitle">LEG DAY<br\/?>/);
   });
 
   test('opening the site with no address shows Legs A and writes #legsA', async ({ page }) => {
-    await page.goto('/');
-    await page.waitForFunction(() => '__legacyBridge' in window);
+    await page.goto(appPath());
+    await page.waitForFunction(() => '__legacyBridge' in window || '__training' in window);
     await expect(page).toHaveURL(/#legsA$/);
     await expect(page.locator('#legsA')).toHaveClass(/active/);
   });
@@ -135,7 +135,8 @@ test.describe('nav, phone menu and scrolling', () => {
     await page.locator('#legsA').scrollIntoViewIfNeeded();
     await page.locator('#legsA .exercise-card').first().scrollIntoViewIfNeeded();
     await page.locator('.tracker-day-card[data-jump="push"][data-day="A"]').evaluate((el: HTMLElement) => el.click());
-    await expect(page.locator('#pushA .exercise-card').first()).toHaveClass(/visible/);
+    // Revealed: the visible class, or (where React redraws the card) the data-revealed mark.
+    await expect(page.locator('#pushA .exercise-card').first()).toHaveAttribute('data-revealed', '');
   });
 
   test('the hero has 18 drifting particles', async ({ page }) => {

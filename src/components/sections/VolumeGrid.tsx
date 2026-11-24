@@ -2,7 +2,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { VolumeCard } from '@/content/volume';
+import { useToday, useTraining } from '@/lib/training/client';
+import { volumeLine } from '@/lib/training/volume';
 import { useHydrated } from '@/lib/useHydrated';
+
+/** "12 logged so far · last trained yesterday", from the training store (rebuilt core only). */
+function VolumeLine({ muscle }: { muscle: string }) {
+  const doneMap = useTraining((s) => s.doneMap);
+  const logMap = useTraining((s) => s.logMap);
+  const today = useToday();
+  const line = today ? volumeLine(muscle, doneMap, logMap, today) : null;
+  return line === null ? null : <div className="volume-completed">{line}</div>;
+}
 
 const DETAIL_STYLE = { fontWeight: 500, color: 'var(--ink-muted)', fontSize: '12px' };
 const ZONE_STYLE = { left: '41.67%', width: '41.67%' };
@@ -13,11 +24,12 @@ const ZONE_STYLE = { left: '41.67%', width: '41.67%' };
  * bars, for search engines and readers without JavaScript.) Tapping a card
  * highlights it and the shown day's exercises for that muscle.
  *
- * public/legacy/protocol.js still adds each card's "N logged so far" line
- * (it needs the ticked sets) until the training core moves to React. React
+ * Each card's "N logged so far · last trained …" line needs the training
+ * data: with `liveCounts` (the rebuilt training core, /preview) it comes from
+ * the training store; otherwise public/legacy/protocol.js adds it, and React
  * never adds or removes a card's children, so that line is left alone.
  */
-export function VolumeGrid({ cards }: { cards: VolumeCard[] }) {
+export function VolumeGrid({ cards, liveCounts = false }: { cards: VolumeCard[]; liveCounts?: boolean }) {
   const hydrated = useHydrated();
   const [grown, setGrown] = useState<ReadonlySet<string>>(() => new Set());
   const [highlighted, setHighlighted] = useState<string | null>(null);
@@ -67,6 +79,7 @@ export function VolumeGrid({ cards }: { cards: VolumeCard[] }) {
             {card.sets}
             <span>sets / wk</span>
           </div>
+          {liveCounts ? <VolumeLine muscle={card.muscle} /> : null}
           <div className="volume-track">
             <div className="volume-zone" style={ZONE_STYLE} />
             <div

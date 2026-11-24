@@ -20,7 +20,20 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'desktop', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'desktop', use: { ...devices['Desktop Chrome'] }, testIgnore: ['preview.spec.ts'] },
+    // The rebuilt training core at /preview (docs/react-rebuild-plan.md, Phase 3),
+    // held to the same tests as the live page: the ones it can pass so far. Widen
+    // these as each step lands; at the switch-over it runs them all.
+    {
+      name: 'preview',
+      use: { ...devices['Desktop Chrome'] },
+      metadata: { appPath: '/preview' },
+      testMatch: ['preview.spec.ts', 'tracking.spec.ts', 'shell.spec.ts', 'sections.spec.ts', 'timers.spec.ts'],
+      // Not built there yet: the rest timer, session timer, Workout Mode and tempo pacer (3c).
+      grepInvert: /starts the rest timer|Auto-Rest off|session timer starts|Start Workout enters|tempo pacer turns|swiping left and right/,
+    },
+  ],
   webServer: {
     command: `npm run build && npx next start -p ${PORT}`,
     url: `http://127.0.0.1:${PORT}`,

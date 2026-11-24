@@ -1,6 +1,19 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 type LogEntry = { w?: string; r?: string; rir?: string; pr?: boolean };
+
+/**
+ * The page under test: "/" (the live page, old script) or "/preview" (the
+ * rebuilt training core), set per project in playwright.config.ts.
+ */
+export function appPath(): string {
+  return (test.info().project.metadata as { appPath?: string } | undefined)?.appPath ?? '/';
+}
+
+/** Either version has booted: the old script's bridge, or the training store. */
+async function appReady(page: Page) {
+  await page.waitForFunction(() => '__legacyBridge' in window || '__training' in window);
+}
 
 export interface Seed {
   doneMap?: Record<string, boolean>;
@@ -32,15 +45,15 @@ export async function seed(page: Page, s: Seed) {
   }, s);
 }
 
-/** Opens the protocol page and waits for the original app to finish booting. */
+/** Opens the protocol page and waits for it to finish booting. */
 export async function openApp(page: Page, hash = '#legsA') {
-  await page.goto('/' + hash);
-  await page.waitForFunction(() => '__legacyBridge' in window);
+  await page.goto(appPath() + hash);
+  await appReady(page);
 }
 
 export async function reload(page: Page) {
   await page.reload();
-  await page.waitForFunction(() => '__legacyBridge' in window);
+  await appReady(page);
 }
 
 export const card = (page: Page, ex: string) => page.locator(`.exercise-card[data-exercise="${ex}"]`);
@@ -65,7 +78,9 @@ export async function enter(page: Page, box: ReturnType<typeof weightBox>, value
 /** What the app has saved, after skipping its half-second save delay. */
 export async function saved(page: Page) {
   return page.evaluate(() => {
-    (window as unknown as { flushUnifiedState?: () => void }).flushUnifiedState?.();
+    const w = window as unknown as { flushUnifiedState?: () => void; __training?: { flush(): void } };
+    w.flushUnifiedState?.();
+    w.__training?.flush();
     return JSON.parse(localStorage.getItem('hb_state_v1') || '{}');
   });
 }
