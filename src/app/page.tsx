@@ -3,6 +3,10 @@ import '@/styles/auth.css';
 import { AccountNav } from '@/components/auth/AccountNav';
 import { LegacyFragment } from '@/components/legacy/LegacyFragment';
 import { LegacyRuntime } from '@/components/legacy/LegacyRuntime';
+import { Gauge } from '@/components/sections/Gauge';
+import { Protocol } from '@/components/sections/Protocol';
+import { SiteFooter } from '@/components/sections/SiteFooter';
+import { Standards } from '@/components/sections/Standards';
 import { CloudSync } from '@/components/sync/CloudSync';
 import { Workout } from '@/components/workout/Workout';
 
@@ -19,14 +23,14 @@ export default function Home() {
       <LegacyFragment name="nav" />
       <LegacyFragment name="hero" />
       <LegacyFragment name="tracker" />
-      <LegacyFragment name="protocol" />
-      <LegacyFragment name="standards" />
-      <LegacyFragment name="gauge" />
+      <Protocol />
+      <Standards />
+      <Gauge />
       <LegacyFragment name="volume" />
       <Workout />
       <LegacyFragment name="anatomy" />
       <LegacyFragment name="sources" />
-      <LegacyFragment name="footer" />
+      <SiteFooter />
       <LegacyFragment name="overlays" />
       <LegacyRuntime />
       <AccountNav />

@@ -5,6 +5,9 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // The reading sections are prose written straight into JSX: apostrophes and
+  // quotes there are meant ("isn't"), not typos for a closing tag or brace.
+  { files: ["src/components/sections/**"], rules: { "react/no-unescaped-entities": "off" } },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
