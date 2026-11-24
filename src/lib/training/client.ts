@@ -33,9 +33,19 @@ const subscribe = (listener: () => void) => trainingStore().subscribe(listener);
 /** What the server draws, and the page shows until it's live: nothing ticked or logged, default preferences. */
 const SERVER_STATE: TrainingState = emptyTrainingState();
 
+// One minute-ticker shared by every component that shows "today".
+const clockListeners = new Set<() => void>();
+let clockTimer: ReturnType<typeof setInterval> | null = null;
 const subscribeToClock = (listener: () => void) => {
-  const timer = setInterval(listener, 60_000);
-  return () => clearInterval(timer);
+  clockListeners.add(listener);
+  clockTimer ??= setInterval(() => clockListeners.forEach((l) => l()), 60_000);
+  return () => {
+    clockListeners.delete(listener);
+    if (!clockListeners.size && clockTimer) {
+      clearInterval(clockTimer);
+      clockTimer = null;
+    }
+  };
 };
 
 /** Today's date key ("2026-11-25"), rolling over at midnight; '' in the server HTML. */

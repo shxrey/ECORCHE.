@@ -1,5 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
-import { card, dateKey, dot, enter, expand, openApp, reload, repsBox, row, saved, seed, weightBox } from './helpers';
+import { appPath, card, dateKey, dot, enter, expand, openApp, reload, repsBox, row, saved, seed, weightBox } from './helpers';
+
+/** Fixed in the rebuilt training core (/preview); the live page keeps the old behaviour until the switch-over. */
+const OLD_PAGE_BUG = 'Old-page bug, fixed in the rebuilt core';
 
 const EX = 'legs-a1';
 const yesterday = dateKey(-1);
@@ -57,19 +60,21 @@ test.describe('logging weight, reps and RIR', () => {
     await expect(page.locator(`#lastLog-${EX}`)).toHaveText('Last: 100kg × 8');
   });
 
-  // Known bug, fixed in Phase 3b: typing in one set's box also saves the
+  // Old-page bug (fixed in the rebuilt core): typing in one set's box also saves the
   // suggested numbers sitting in the card's other rows as real sets (so here
   // set 2 gets 102.5 × 6 "logged", and "Last:" shows it).
-  test.fixme("editing one set doesn't save the other rows' suggestions as sets", async ({ page }) => {
+  test("editing one set doesn't save the other rows' suggestions as sets", async ({ page }) => {
+    test.fixme(appPath() === '/', OLD_PAGE_BUG);
     await withYesterday(page);
     await enter(page, weightBox(page, EX, 1), '105');
     expect((await saved(page)).logMap[EX][today]['2']).toBeUndefined();
     await expect(page.locator(`#lastLog-${EX}`)).toHaveText('Last: 105kg × 8');
   });
 
-  // Known bug, fixed in Phase 3b: a re-save compares the set with its own
+  // Old-page bug (fixed in the rebuilt core): a re-save compares the set with its own
   // earlier save today, so typing the RIR after a PR wipes the PR.
-  test.fixme('a PR stays a PR when the same set is edited again', async ({ page }) => {
+  test('a PR stays a PR when the same set is edited again', async ({ page }) => {
+    test.fixme(appPath() === '/', OLD_PAGE_BUG);
     await withYesterday(page);
     await enter(page, weightBox(page, EX, 1), '110');
     await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
@@ -78,9 +83,10 @@ test.describe('logging weight, reps and RIR', () => {
     expect((await saved(page)).logMap[EX][today]['1']).toMatchObject({ w: '110', rir: '1', pr: true });
   });
 
-  // Known bug, fixed in Phase 3b: the lasting "PR" tag is only drawn when the
+  // Old-page bug (fixed in the rebuilt core): the lasting "PR" tag is only drawn when the
   // PR happens, never when the page loads, so a reload hides it.
-  test.fixme('a PR still shows its tag after a reload', async ({ page }) => {
+  test('a PR still shows its tag after a reload', async ({ page }) => {
+    test.fixme(appPath() === '/', OLD_PAGE_BUG);
     await withYesterday(page);
     await enter(page, weightBox(page, EX, 1), '110');
     await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
@@ -88,6 +94,25 @@ test.describe('logging weight, reps and RIR', () => {
     await reload(page);
     await expand(page, EX);
     await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
+  });
+
+  // Old-page bug (fixed in the rebuilt core): on narrower phones the row is
+  // wider than the card, so badges run off its edge and are cut off (at 360px
+  // wide, by 21-34px; at 375px by up to 19px; at 390px only "hold" by 4px).
+  test('on a phone, every ▲ / hold / ▼ badge stays inside the card', async ({ page }) => {
+    test.fixme(appPath() === '/', OLD_PAGE_BUG);
+    await page.setViewportSize({ width: 360, height: 800 });
+    await seed(page, { logMap: { [EX]: { [yesterday]: { 1: { w: '100', r: '8', rir: '' }, 2: { w: '102.5', r: '6', rir: '' }, 3: { w: '100', r: '8', rir: '' } } } } });
+    await openApp(page, '#legsA');
+    await expand(page, EX);
+    await enter(page, weightBox(page, EX, 1), '102.5');
+    await enter(page, weightBox(page, EX, 3), '95');
+    const badges = card(page, EX).locator('.delta-badge');
+    await expect(badges).toHaveText(['▲ +2.5kg ready', '— hold, rebuild reps', '▼ below last time']);
+    const edge = await card(page, EX).evaluate((el) => el.getBoundingClientRect().right);
+    for (const right of await badges.evaluateAll((els) => els.map((e) => e.getBoundingClientRect().right))) {
+      expect(right).toBeLessThanOrEqual(edge);
+    }
   });
 
   test('warm-up steps are 50 / 75 / 90% of set 1, rounded to 2.5 kg', async ({ page }) => {

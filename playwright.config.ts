@@ -29,7 +29,7 @@ export default defineConfig({
       name: 'preview',
       use: { ...devices['Desktop Chrome'] },
       metadata: { appPath: '/preview' },
-      testMatch: ['preview.spec.ts', 'tracking.spec.ts', 'shell.spec.ts', 'sections.spec.ts', 'timers.spec.ts'],
+      testMatch: ['preview.spec.ts', 'tracking.spec.ts', 'logging.spec.ts', 'shell.spec.ts', 'sections.spec.ts', 'timers.spec.ts'],
       // Not built there yet: the rest timer, session timer, Workout Mode and tempo pacer (3c).
       grepInvert: /starts the rest timer|Auto-Rest off|session timer starts|Start Workout enters|tempo pacer turns|swiping left and right/,
     },

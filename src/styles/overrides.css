@@ -60,3 +60,7 @@
   background: var(--bg-elevated); border: 1px solid var(--border-strong); color: var(--ink-muted);
   font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none;
 }
+
+/* Phones: a long ▲/▼ badge ("▲ +2.5kg ready") wraps under the boxes instead of
+   running off the card and being cut off (rebuilt training core only). */
+.set-log-panel[data-rebuilt] .set-log-row { flex-wrap: wrap; }

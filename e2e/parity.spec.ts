@@ -18,14 +18,13 @@ import { exercises } from '../src/content/program';
 import { applyBackup, buildBackup, readBackup } from '../src/lib/training/backup';
 import { csvCell, logToCsv } from '../src/lib/training/csv';
 import { formatRecency } from '../src/lib/training/dates';
-import { lastEarlierNote, lastLoggedText, lastSessionText, lastTimeThisSet, setBoxes } from '../src/lib/training/history';
-import { isEasierThanPrescribed, restSeconds, targetRirMax, warmupSteps } from '../src/lib/training/prescription';
 import { DAY_IDS, recentDays, trainingWeekBanner, weekProgress, weeklySetCounts } from '../src/lib/training/progress';
-import { compareToLastTime, currentEstimate, estimate1RM, loadTrend } from '../src/lib/training/strength';
+import { estimate1RM } from '../src/lib/training/strength';
 import { loadTrainingState, TrainingStore, type KeyValueStorage } from '../src/lib/training/store';
 import type { TrainingState } from '../src/lib/training/types';
-import { formatEstimate, inputToKg, toUnit, weightBoxToKg, weightToInput } from '../src/lib/training/units';
+import { formatEstimate, inputToKg, toUnit, weightToInput } from '../src/lib/training/units';
 import { volumeLine } from '../src/lib/training/volume';
+import { expectedCards, readCards, splitHeights } from './cards';
 import { confirmDialog, type Seed } from './helpers';
 import { daysFromToday, NOW, randomData, TODAY } from './random-data';
 
@@ -36,7 +35,7 @@ const EXERCISE_KEYS = new Set(exercises.map((e) => e.key));
 type Fn = (...args: unknown[]) => unknown;
 /** The old script's global functions used here. */
 type Legacy = Record<'estimate1RM' | 'toUnit' | 'weightToInput' | 'inputToKg' | 'formatEstimate' | 'csvEscape' | 'formatRecency'
-  | 'repRangeToSeconds' | 'getTargetRIRMax' | 'toggleWarmupCalc' | 'openHistoryModal', Fn>
+  | 'openHistoryModal', Fn>
   & { __legacyBridge: { readState(): TrainingState } };
 
 async function openOldApp(page: Page, seed: Seed) {
@@ -52,104 +51,14 @@ async function openOldApp(page: Page, seed: Seed) {
   await page.waitForFunction(() => '__legacyBridge' in window);
 }
 
-/** Everything the old page shows for every exercise. */
-function readCards(page: Page) {
-  return page.evaluate(() => {
-    const w = window as unknown as Legacy;
-    const text = (id: string) => document.getElementById(id)?.textContent ?? null;
-    const out: Record<string, unknown> = {};
-    document.querySelectorAll<HTMLElement>('.exercise-card').forEach((card) => {
-      const ex = card.dataset.exercise!;
-      w.toggleWarmupCalc(ex);
-      out[ex] = {
-        lastLog: text('lastLog-' + ex),
-        lastSession: text('lastSession-' + ex),
-        est: text('est1rm-' + ex),
-        lastNote: text('lastNote-' + ex),
-        trend: [...document.querySelectorAll<HTMLElement>(`#loadSpark-${ex} .ls-bar`)].map((b) => [parseFloat(b.style.height), b.title]),
-        warmup: text('warmupCalc-' + ex),
-        notes: card.querySelector<HTMLTextAreaElement>('.exercise-notes')!.value,
-        rest: w.repRangeToSeconds(card.querySelector('.set-dot')),
-        rirMax: w.getTargetRIRMax(card),
-        rows: [...card.querySelectorAll('.set-log-row')].map((row) => {
-          const box = (c: string) => row.querySelector<HTMLInputElement>(c)!;
-          return {
-            weight: box('.log-weight').value,
-            weightKg: box('.log-weight').getAttribute('data-kg'),
-            reps: box('.log-reps').value,
-            rir: box('.log-rir').value,
-            suggested: { weight: box('.log-weight').classList.contains('log-input-suggested'), reps: box('.log-reps').classList.contains('log-input-suggested') },
-            badge: [row.querySelector('.delta-badge')!.className, row.querySelector('.delta-badge')!.textContent],
-            easy: row.classList.contains('rir-easy'),
-            prMarker: !!row.querySelector('.pr-persistent-badge'),
-          };
-        }),
-      };
-    });
-    return out;
-  });
-}
-
-/** What the modules say the old page should show (same shape as readCards). */
-function expectedCards(state: TrainingState) {
-  const unit = state.prefs.unit;
-  const out: Record<string, unknown> = {};
-  for (const ex of exercises) {
-    const history = state.logMap[ex.key];
-    const est = currentEstimate(history, TODAY);
-    const note = lastEarlierNote(state.notesMap[ex.key], TODAY);
-    const one = setBoxes(history, 1, TODAY, unit);
-    const steps = warmupSteps(one.weight, unit);
-    out[ex.key] = {
-      lastLog: lastLoggedText(history, TODAY, unit),
-      lastSession: lastSessionText(history, TODAY, unit),
-      est: est ? 'Est. 1RM: ~' + formatEstimate(est, unit) : '',
-      lastNote: note ? `Last note (${note.date}): ${note.text}` : '',
-      trend: loadTrend(history).map((p) => [p.height, p.date + (p.est ? ': ~' + formatEstimate(p.est, unit) + ' e1RM' : ': no weight logged')]),
-      warmup: steps ? steps.map((s) => `${s.pct}%: ${s.weight}${unit}`).join('') : "Enter set 1's weight first.",
-      notes: state.notesMap[ex.key]?.[TODAY] ?? '',
-      rest: restSeconds(ex.reps),
-      rirMax: targetRirMax(ex.rir),
-      rows: ex.setDots.map((dot) => {
-        const b = setBoxes(history, dot.idx, TODAY, unit);
-        const delta = compareToLastTime(weightBoxToKg(b.weight, b.weightKg, unit), b.reps, lastTimeThisSet(history, dot.idx, TODAY), unit);
-        return {
-          weight: b.weight,
-          weightKg: b.weightKg,
-          reps: b.reps,
-          rir: b.rir,
-          suggested: b.suggested,
-          badge: [delta ? `delta-badge ${delta.className}` : 'delta-badge', delta ? delta.text : ''],
-          easy: isEasierThanPrescribed(b.rir, targetRirMax(ex.rir)),
-          // Old-page bug, fixed in Phase 3b: the lasting "PR" marker is never
-          // drawn on load (its function is out of reach of the code that loads
-          // the boxes), so after a reload no set shows it. Module: b.pr.
-          prMarker: false,
-        };
-      }),
-    };
-  }
-  return out;
-}
-
-/** Takes out the trend bars' heights: the browser keeps only ~6 digits of them, so they're compared to within 0.01 px. */
-function splitHeights(cards: Record<string, unknown>) {
-  const heights: Record<string, number[]> = {};
-  for (const [ex, c] of Object.entries(cards) as [string, { trend: [number, string][] }][]) {
-    heights[ex] = c.trend.map(([h]) => h);
-    c.trend = c.trend.map(([, title]) => [0, title]);
-  }
-  return heights;
-}
-
 const jsonCopy = <T,>(v: T): T => JSON.parse(JSON.stringify(v));
 
 for (const [seedNo, unit] of [[1, 'kg'], [2, 'lb'], [3, 'kg'], [4, 'lb']] as const) {
   test(`every card shows what the modules work out (random history #${seedNo}, ${unit})`, async ({ page }) => {
     const data = randomData(seedNo, unit);
     await openOldApp(page, data.seed);
-    const shown = await readCards(page);
-    const expected = expectedCards(data.state);
+    const shown = await readCards(page, { oldPage: true });
+    const expected = expectedCards(data.state, { oldPage: true });
     const shownHeights = splitHeights(shown);
     const expectedHeights = splitHeights(expected);
     expect(shown).toEqual(expected);

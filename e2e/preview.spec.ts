@@ -8,12 +8,30 @@ import { days, exercises } from '../src/content/program';
 import { trainingWeekBanner, weekProgress } from '../src/lib/training/progress';
 import { volumeLine } from '../src/lib/training/volume';
 import type { TrainingState } from '../src/lib/training/types';
+import { expectedCards, readCards, splitHeights } from './cards';
 import { dot, saved, seed } from './helpers';
 import { NOW, randomData, TODAY } from './random-data';
 
 async function openAt(page: Page, path: string, hash = '#legsA') {
   await page.goto(path + hash);
   await page.waitForFunction(() => '__legacyBridge' in window || '__training' in window);
+}
+
+for (const [seedNo, unit] of [[1, 'kg'], [2, 'lb']] as const) {
+  test(`every card's session log shows what the modules work out (random history #${seedNo}, ${unit})`, async ({ page }) => {
+    const data = randomData(seedNo, unit);
+    await page.clock.setFixedTime(NOW);
+    await seed(page, data.seed);
+    await openAt(page, '/preview');
+    const shown = await readCards(page, { oldPage: false });
+    const expected = expectedCards(data.state, { oldPage: false });
+    const shownHeights = splitHeights(shown);
+    const expectedHeights = splitHeights(expected);
+    expect(shown).toEqual(expected);
+    for (const ex of Object.keys(expectedHeights)) {
+      expectedHeights[ex].forEach((h, i) => expect(shownHeights[ex][i], ex).toBeCloseTo(h, 2));
+    }
+  });
 }
 
 for (const seedNo of [11, 12]) {

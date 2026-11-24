@@ -7,6 +7,8 @@ import type { Exercise } from '@/content/types';
 import { trainingStore, useTraining } from '@/lib/training/client';
 import { setKey } from '@/lib/training/progress';
 import { useHydrated } from '@/lib/useHydrated';
+import { LastLogged, LogPanel } from './LogPanel';
+import { useExerciseLog } from './useExerciseLog';
 
 /** The name as shown in the card's heading, suffix included ("Barbell Back Squats Peak Intensity"). */
 export function displayName(ex: Exercise): string {
@@ -36,8 +38,10 @@ function animateBody(card: HTMLElement, body: HTMLElement, inner: HTMLElement, o
 
 /**
  * One exercise in the rebuilt training core: tap the header (or Enter / Space)
- * to open it, tap a set button to tick or untick that set. A card whose sets
- * are all ticked is marked complete. Same markup as the original page.
+ * to open it, tap a set button to tick or untick that set (ticking also saves
+ * that set's boxes). Once the page is live it gets its session log ("Last:"
+ * in the header, the log panel in the body). A card whose sets are all ticked
+ * is marked complete. Same markup as the original page.
  */
 export function TrainingExerciseCard({
   exercise: ex,
@@ -58,6 +62,7 @@ export function TrainingExerciseCard({
   const done = ex.setDots.map((dot) => hydrated && !!doneMap[setKey(ex.key, dot.idx)]);
   const complete = done.length > 0 && done.every(Boolean);
   const name = displayName(ex);
+  const log = useExerciseLog(ex);
 
   const firstRender = useRef(true);
   useEffect(() => {
@@ -80,7 +85,10 @@ export function TrainingExerciseCard({
   const tick = (idx: string) => {
     tapped.current = true;
     const nowDone = trainingStore().toggleSet(dayId, ex.key, idx);
-    if (nowDone && navigator.vibrate) navigator.vibrate(50);
+    if (!nowDone) return; // unticking never erases what was logged
+    if (navigator.vibrate) navigator.vibrate(50);
+    // A ticked set was done: save what its boxes hold (only this set).
+    log.commit(idx, { whenEdited: false });
   };
 
   const onHeaderClick = (e: MouseEvent) => {
@@ -118,6 +126,7 @@ export function TrainingExerciseCard({
               </span>
             ))}
           </div>
+          {hydrated ? <LastLogged exKey={ex.key} log={log} /> : null}
         </div>
         <div className="exercise-meta">
           <MetaPill className={pillClass} label="Sets" value={ex.sets} />
@@ -152,6 +161,7 @@ export function TrainingExerciseCard({
               <DetailBlockView key={i} block={block} />
             ))}
           </div>
+          {hydrated ? <LogPanel exKey={ex.key} name={name} log={log} /> : null}
         </div>
       </div>
     </div>
