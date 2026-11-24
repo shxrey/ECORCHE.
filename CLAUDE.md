@@ -13,6 +13,7 @@ npm run lint
 npm run typecheck       # next typegen && tsc --noEmit
 npm run test:db         # applies every migration to in-memory Postgres (PGlite), tests RLS + sync_push/sync_pull
 npm run test:sync       # node:test via tsx: sync engine, session cookie, feedback
+npm run test:e2e        # Playwright behaviour tests (e2e/): builds, serves on 127.0.0.1:3100, always signed out
 npm run extract:legacy  # regenerates the legacy-derived files (see below)
 npm run verify:legacy   # proves React's <Workout /> renders the same DOM as reference/protocol.html
 ```

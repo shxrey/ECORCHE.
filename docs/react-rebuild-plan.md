@@ -35,8 +35,10 @@ separately.
 
 Nothing visible changes. This makes every later step safe to check.
 
-- [ ] **Behaviour tests** (Playwright, run with `npm run test:e2e` against a production
-      build), written against *today's* app so they pin down what it does now:
+- [x] **Behaviour tests** (Playwright, run with `npm run test:e2e` against a production
+      build). Done 24 Nov: 28 tests in `e2e/`, passing three runs in a row (~40 s),
+      plus 1 `test.fixme` for the suggestions bug, to switch on in 3b. Written against
+      *today's* app so they pin down what it does now:
       tick sets and see day/week progress; log weight, reps and RIR; suggestions from last
       session; "Last session", e1RM, trend bars, ▲/▼ badges and PRs; warm-up steps; kg/lb;
       notes are dated; rest timer and session timer; undo toast; reset day and week; export,

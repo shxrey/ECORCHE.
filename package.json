@@ -11,7 +11,8 @@
     "verify:legacy": "tsx scripts/verify-legacy.tsx",
     "typecheck": "next typegen && tsc --noEmit",
     "test:db": "node supabase/tests/rls.test.mjs",
-    "test:sync": "tsx --test src/lib/sync/sync.test.ts src/lib/supabase/session-cookie.test.ts src/lib/feedback.test.ts src/lib/supabase/auth-errors.test.ts"
+    "test:sync": "tsx --test src/lib/sync/sync.test.ts src/lib/supabase/session-cookie.test.ts src/lib/feedback.test.ts src/lib/supabase/auth-errors.test.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.17",
+    "@playwright/test": "1.65.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
