@@ -105,6 +105,9 @@ const rebrand = [
     '        <button type="button" class="active" data-unit="kg" aria-pressed="true" onclick="setWeightUnit(\'kg\')">kg</button>\n' +
     '        <button type="button" data-unit="lb" aria-pressed="false" onclick="setWeightUnit(\'lb\')">lb</button>\n' +
     '      </div>\n'],
+  // The hidden file picker behind "Import Backup" had no name (screen-reader audit, 2026-11-24).
+  ['tracker', '<input type="file" id="importFileInput" accept="application/json"',
+    '<input type="file" id="importFileInput" aria-label="Backup file to import" accept="application/json"'],
 ];
 for (const [key, from, to] of rebrand) {
   if (!fragments[key].includes(from)) throw new Error(`rebrand target missing in ${key}: ${from}`);
@@ -343,7 +346,11 @@ const patches = [
   // that reads a weight box or prints a weight goes through its helpers.
   [`  // ===== LOCAL STORAGE — VOICE ANNOUNCEMENT PREFERENCE =====\n`,
    readFileSync(resolve(root, 'scripts/legacy-units.js'), 'utf8').replace(/\r\n/g, '\n') +
+   // Screen-reader names for the log boxes (2026-11-24), which say the unit too.
+   readFileSync(resolve(root, 'scripts/legacy-labels.js'), 'utf8').replace(/\r\n/g, '\n') +
    `  // ===== LOCAL STORAGE — VOICE ANNOUNCEMENT PREFERENCE =====\n`],
+  [`        bodyInner.appendChild(panel);\n`,
+   `        bodyInner.appendChild(panel);\n        labelLogBoxes(card); // screen-reader names (scripts/legacy-labels.js)\n`],
   // Weight boxes: what's typed is saved as kg; what's saved is shown in the chosen unit.
   [`class="log-input log-weight" placeholder="kg" data-set="' + i + '">'`,
    `class="log-input log-weight" placeholder="' + weightUnit + '" data-set="' + i + '">'`],

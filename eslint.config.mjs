@@ -15,8 +15,9 @@ const eslintConfig = defineConfig([
     // Original single-file logic, ported unchanged. Its functions are called
     // from inline handlers, so "unused" warnings there are false positives.
     "public/legacy/**",
-    // A snippet the extractor inserts into that same script (same reason).
+    // Snippets the extractor inserts into that same script (same reason).
     "scripts/legacy-units.js",
+    "scripts/legacy-labels.js",
   ]),
 ]);
 

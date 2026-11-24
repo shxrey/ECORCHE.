@@ -63,6 +63,8 @@
       btn.setAttribute('aria-pressed', String(on));
     });
     document.querySelectorAll('.log-weight').forEach(el => { el.placeholder = weightUnit; });
+    // Screen-reader names say the unit too ("weight in pounds"): see scripts/legacy-labels.js.
+    document.querySelectorAll('.exercise-card').forEach(card => { if (card.querySelector('.set-log-panel')) labelLogBoxes(card); });
     document.querySelectorAll('.exercise-notes').forEach(el => { el.placeholder = notesPlaceholder(); });
     // Warm-up steps were worked out in the old unit: close them (one tap reopens).
     document.querySelectorAll('.warmup-calc.open').forEach(el => { el.classList.remove('open'); el.innerHTML = ''; });
