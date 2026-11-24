@@ -12,12 +12,14 @@ import { forgetDeviceProgress, uploadBeforeSignOut } from './device';
 
 // ---------- fakes ----------
 
-type Table = 'checks' | 'logs' | 'notes' | 'days';
+type Table = 'checks' | 'logs' | 'notes' | 'days' | 'timers';
+const TABLES: Table[] = ['checks', 'logs', 'notes', 'days', 'timers'];
 const rowKey: Record<Table, (r: Record<string, unknown>) => string> = {
   checks: r => `${r.exercise_key}|${r.set_idx}`,
   logs: r => `${r.exercise_key}|${r.log_date}|${r.set_idx}`,
   notes: r => `${r.exercise_key}|${r.note_date}`,
   days: r => `${r.day}`,
+  timers: r => `${r.day_id}`,
 };
 
 /** One lifter's account on the server. */
@@ -35,13 +37,13 @@ class FakeServer {
 
   push(p: PushPayload) {
     this.clock += 1000;
-    for (const table of ['checks', 'logs', 'notes', 'days'] as Table[]) {
-      for (const row of p[table] as Record<string, unknown>[]) {
+    for (const table of TABLES) {
+      for (const row of (p[table] ?? []) as Record<string, unknown>[]) {
         if (this.reject(row)) throw new SyncError('check constraint', 'data');
       }
     }
-    for (const table of ['checks', 'logs', 'notes', 'days'] as Table[]) {
-      for (const row of p[table] as Record<string, unknown>[]) {
+    for (const table of TABLES) {
+      for (const row of (p[table] ?? []) as Record<string, unknown>[]) {
         const key = `${table}|${rowKey[table](row)}`;
         const existing = this.rows.get(key);
         if (!existing || Date.parse(existing.row.ts as string) <= Date.parse(row.ts as string)) {
@@ -58,7 +60,7 @@ class FakeServer {
     this.clock += 1000;
     const after = since ? Date.parse(since) : -Infinity;
     const result: PullResult = {
-      server_time: new Date(this.clock).toISOString(), checks: [], logs: [], notes: [], days: [],
+      server_time: new Date(this.clock).toISOString(), checks: [], logs: [], notes: [], days: [], timers: [],
       settings: this.settings.updated > after ? this.settings.row : null,
     };
     for (const { table, row, updated } of this.rows.values()) {
@@ -153,6 +155,21 @@ describe('model', () => {
     assert.deepEqual(back.value, prefs);
     assert.equal(normalizePrefs({}).unit, 'kg');
     assert.equal(normalizePrefs({ unit: 'stone' as never }).unit, 'kg', 'anything unexpected falls back to kg');
+  });
+
+  it('carries workout timers, and resets, to the database and back', () => {
+    const start = Date.parse('2026-11-24T10:00:00.123Z');
+    const s = emptyState();
+    s.timers = { legsA: start, armsA: 5, pushB: Number.NaN };
+    const records = flatten(s);
+    assert.deepEqual(Object.keys(records).filter(k => k.startsWith('t|')), ['t|legsA'], 'only real days and real times');
+    const payload = toPushPayload([
+      { key: 't|legsA', value: start, ts: 7 },
+      { key: 't|pullB', value: null, ts: 8 },
+    ]);
+    assert.deepEqual(payload.timers.map(t => [t.day_id, t.started_at]), [['legsA', '2026-11-24T10:00:00.123Z'], ['pullB', null]]);
+    const back = fromPullResult({ server_time: '', checks: [], logs: [], notes: [], days: [], timers: payload.timers, settings: null });
+    assert.deepEqual(back.map(c => [c.key, c.value]), [['t|legsA', start], ['t|pullB', null]]);
   });
 
   it('skips records with unknown exercises or set labels instead of failing', () => {
@@ -337,6 +354,62 @@ describe('engine', () => {
     assert.equal(server.settings.row.mesocycle_week, 3, "the phone's stale settings weren't pushed");
     assert.equal(phone.state.prefs.mesocycleWeek, 3, "the phone took the laptop's change");
   });
+
+  it('a workout timer started on the phone shows on the laptop; resetting the day clears it on both', async () => {
+    const server = new FakeServer();
+    const phone = new Device(), laptop = new Device();
+    const p = phone.connect(USER, server), l = laptop.connect(USER, server);
+    phone.edit(s => { s.timers.legsA = phone.time; });
+    await p.sync();
+    await l.sync();
+    assert.equal(laptop.state.timers.legsA, phone.time);
+    laptop.edit(s => { delete s.timers.legsA; }, 5);
+    await l.sync();
+    await p.sync();
+    assert.equal(phone.state.timers.legsA, undefined);
+  });
+
+  it("an old timer expiring on one device never cancels a session just started on another", async () => {
+    const server = new FakeServer();
+    const phone = new Device(), laptop = new Device();
+    // Last week's leg day: the laptop saw that session's timer.
+    phone.edit(s => { s.timers.legsA = phone.time; });
+    await phone.connect(USER, server).sync();
+    await laptop.connect(USER, server).sync();
+    assert.ok(laptop.state.timers.legsA);
+    // A week later the phone starts leg day again...
+    phone.time += 7 * 24 * 60 * 60_000;
+    phone.edit(s => { s.timers.legsA = phone.time; });
+    await phone.connect(USER, server).sync();
+    const today = phone.time;
+    // ...and 20 minutes in, the laptop opens the app, which drops last week's timer as it loads.
+    laptop.time = today + 20 * 60_000;
+    delete laptop.state.timers.legsA;
+    await laptop.connect(USER, server).sync();
+    assert.equal(server.get('timers|legsA')?.started_at, new Date(today).toISOString(), "today's session wasn't cancelled");
+    assert.equal(laptop.state.timers.legsA, today, "the laptop shows today's session");
+  });
+
+  it("a timer running from before the update can't beat a session started later elsewhere", async () => {
+    const server = new FakeServer();
+    const phone = new Device(), laptop = new Device();
+    await phone.connect(USER, server).sync();
+    const l = laptop.connect(USER, server);
+    await l.sync();
+    // The phone's timer started 30 minutes ago, under the version that didn't sync timers.
+    const old = phone.time - 30 * 60_000;
+    phone.state.timers.pushA = old;
+    // Meanwhile the laptop starts Push A (10 minutes from now) and syncs it.
+    laptop.time = phone.time;
+    laptop.edit(s => { s.timers.pushA = laptop.time; }, 10);
+    await l.sync();
+    const later = laptop.time;
+    // Then the phone opens the updated app.
+    phone.time = later + 5 * 60_000;
+    await phone.connect(USER, server).sync();
+    assert.equal(server.get('timers|pushA')?.started_at, new Date(later).toISOString());
+    assert.equal(phone.state.timers.pushA, later);
+  });
 });
 
 // ---------- signing out (src/lib/sync/device.ts) ----------
@@ -409,6 +482,23 @@ describe('sign-out', () => {
 
     assert.equal(await uploadBeforeSignOut(fakeSupabase(server), USER), 0);
     assert.equal(server.settings.row.weight_unit, 'lb');
+  });
+
+  it("doesn't clear a workout timer that's still running on another device", async () => {
+    const data = fakeStorage();
+    const server = new FakeServer();
+    deviceWithUnsyncedEdit(data);
+    const start = Date.now() - 10 * 60_000;
+    const iso = new Date(start).toISOString();
+    server.push({ checks: [], logs: [], notes: [], days: [], timers: [{ day_id: 'legsA', started_at: iso, ts: iso }] });
+    // This device had synced that timer too.
+    const meta = JSON.parse(data.get('hb_sync_v1')!) as SyncMeta;
+    meta.shadow!['t|legsA'] = start;
+    data.set('hb_sync_v1', JSON.stringify(meta));
+    data.set('hb_sessionTimerStarts_v1', JSON.stringify({ legsA: start }));
+
+    assert.equal(await uploadBeforeSignOut(fakeSupabase(server), USER), 0);
+    assert.equal(server.get('timers|legsA')?.started_at, iso);
   });
 
   it("never uploads another account's progress", async () => {

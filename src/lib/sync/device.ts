@@ -48,6 +48,9 @@ function readSavedState(): LegacyState {
     logMap: asMap(maps.logMap),
     notesMap: asMap(maps.notesMap),
     sessionsMap: asMap(maps.sessionsMap),
+    // Running workout timers: without them, signing out would look like a
+    // reset and clear a timer still running on the lifter's other device.
+    timers: asMap(read('hb_sessionTimerStarts_v1')),
     prefs: {
       autoRest: flag('hb_autoRest_v1', true),
       audio: flag('hb_audioEnabled_v1', true),

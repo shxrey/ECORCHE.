@@ -2750,6 +2750,21 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     catch (e) { handleStorageWriteError(e); }
   }
   const sessionTimerStarts = loadSessionTimerStarts(); // dayId -> start timestamp (ms)
+  // Cloud sync (scripts/legacy-bridge.js) reads and replaces the running timers through this.
+  window.__legacySessionTimers = {
+    read: function () { return Object.assign({}, sessionTimerStarts); },
+    replace: function (next) {
+      const now = Date.now();
+      Object.keys(sessionTimerStarts).forEach(k => delete sessionTimerStarts[k]);
+      Object.keys(next || {}).forEach(k => {
+        const ts = next[k];
+        if (typeof ts === 'number' && (now - ts) < SESSION_TIMER_STALE_MS) sessionTimerStarts[k] = ts;
+      });
+      saveSessionTimerStarts();
+      if (Object.keys(sessionTimerStarts).length) ensureSessionTimerInterval();
+      refreshSessionTimerDisplay();
+    }
+  };
   let sessionTimerInterval = null;
 
   function pad2(n) { return String(n).padStart(2, '0'); }
@@ -2891,6 +2906,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
         logMap: logMap,
         notesMap: notesMap,
         sessionsMap: sessionsMap,
+        timers: window.__legacySessionTimers ? window.__legacySessionTimers.read() : {},
         prefs: {
           autoRest: autoRestEnabled,
           audio: audioEnabled,
@@ -2909,6 +2925,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
         sessionsMap = s.sessionsMap;
         saveUnifiedState();
         flushUnifiedState();
+        if (window.__legacySessionTimers) window.__legacySessionTimers.replace(s.timers || {});
 
         var p = s.prefs;
         if (p) {

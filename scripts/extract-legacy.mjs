@@ -403,6 +403,28 @@ const patches = [
   // Mark the stored unit on the switch at start-up.
   [`  initAutoRestToggle();\n`,
    `  initAutoRestToggle();\n  applyWeightUnit();\n`],
+
+  // ---- Workout timer sync (2026-11-24) ----
+  // The running timers live inside the session-timer block's own scope, so
+  // give the sync bridge a way in: read them, and replace them (dropping any
+  // too old to be a live session, exactly as loading the page does).
+  [`  const sessionTimerStarts = loadSessionTimerStarts(); // dayId -> start timestamp (ms)\n`,
+   `  const sessionTimerStarts = loadSessionTimerStarts(); // dayId -> start timestamp (ms)\n` +
+   `  // Cloud sync (scripts/legacy-bridge.js) reads and replaces the running timers through this.\n` +
+   `  window.__legacySessionTimers = {\n` +
+   `    read: function () { return Object.assign({}, sessionTimerStarts); },\n` +
+   `    replace: function (next) {\n` +
+   `      const now = Date.now();\n` +
+   `      Object.keys(sessionTimerStarts).forEach(k => delete sessionTimerStarts[k]);\n` +
+   `      Object.keys(next || {}).forEach(k => {\n` +
+   `        const ts = next[k];\n` +
+   `        if (typeof ts === 'number' && (now - ts) < SESSION_TIMER_STALE_MS) sessionTimerStarts[k] = ts;\n` +
+   `      });\n` +
+   `      saveSessionTimerStarts();\n` +
+   `      if (Object.keys(sessionTimerStarts).length) ensureSessionTimerInterval();\n` +
+   `      refreshSessionTimerDisplay();\n` +
+   `    }\n` +
+   `  };\n`],
 ];
 for (const [from, to] of patches) {
   // Exactly one match, so a patch can never land somewhere unintended.

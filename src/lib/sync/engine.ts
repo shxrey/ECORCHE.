@@ -1,5 +1,6 @@
 import {
-  applyChanges, diff, emptyState, flatten, fromPullResult, normalizePrefs, sameValue, toPushPayload,
+  applyChanges, diff, emptyState, flatten, fromPullResult, isStaleTimer, normalizePrefs, sameValue, toPushPayload,
+  withoutStaleTimers,
   type Change, type LegacyState, type PullResult, type PushPayload, type RecordMap, type RecordValue,
 } from './model';
 
@@ -156,10 +157,17 @@ export class SyncEngine {
 
   /** Moves any local edits since the last snapshot into the outbox. Synchronous by design. */
   capture(): void {
-    const current = flatten(this.bridge.readState());
+    const now = this.now();
+    // Timers too old to be a live session are left out on both sides: one
+    // quietly expiring here is not a reset (see withoutStaleTimers).
+    const current = withoutStaleTimers(flatten(this.bridge.readState()), now);
     const first = this.meta.shadow === null;
-    for (const c of diff(this.meta.shadow ?? {}, current, first ? UNKNOWN_AGE : this.now())) {
-      this.meta.pending[c.key] = { value: c.value, ts: c.ts };
+    for (const c of diff(withoutStaleTimers(this.meta.shadow ?? {}, now), current, first ? UNKNOWN_AGE : now)) {
+      // A timer start happened when that day's first set was ticked, not when
+      // it was noticed here, so one carried over from before an update (or
+      // from offline) can never beat a session started later elsewhere.
+      const ts = c.key.startsWith('t|') && typeof c.value === 'number' ? Math.min(c.ts, c.value) : c.ts;
+      this.meta.pending[c.key] = { value: c.value, ts };
     }
     this.meta.shadow = current;
     this.store.save(this.meta);
@@ -175,18 +183,22 @@ export class SyncEngine {
     this.capture();
     if (this.bridge.isBusy()) return;
 
+    const now = this.now();
     const current = this.meta.shadow ?? {};
     const toApply: Change[] = [];
-    for (const incoming of fromPullResult(result)) {
+    for (const change of fromPullResult(result)) {
+      // A timer too old to be a live session counts as no timer at all.
+      const incoming = isStaleTimer(change.key, change.value, now) ? { ...change, value: null } : change;
       const mine = this.meta.pending[incoming.key];
       if (mine && mine.ts > incoming.ts) continue; // local edit is newer: it will be pushed
       if (mine) delete this.meta.pending[incoming.key];
-      if (!sameValue(current[incoming.key], incoming.value)) toApply.push(incoming);
+      // (A removal of something this device doesn't have needs no work.)
+      if (!sameValue(current[incoming.key] ?? null, incoming.value)) toApply.push(incoming);
     }
 
     if (toApply.length) {
       this.bridge.applyState(applyChanges(this.bridge.readState(), toApply));
-      this.meta.shadow = flatten(this.bridge.readState());
+      this.meta.shadow = withoutStaleTimers(flatten(this.bridge.readState()), now);
     }
     this.meta.cursor = result.server_time;
     this.store.save(this.meta);

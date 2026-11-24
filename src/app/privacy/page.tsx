@@ -43,8 +43,8 @@ export default function PrivacyPage() {
         <li><strong>Profile details you choose to add:</strong> a display name and a username.</li>
         <li>
           <strong>Your training data:</strong> completed sets, weights, reps, reps in reserve (RIR), personal-record markers,
-          exercise notes, sets completed per day, and app settings (auto rest timer, voice cues, high-contrast mode,
-          training week, kg or lb).
+          exercise notes, sets completed per day, when a workout in progress started (for the session timer), and app
+          settings (auto rest timer, voice cues, high-contrast mode, training week, kg or lb).
         </li>
       </ul>
       <h3>When anyone visits</h3>

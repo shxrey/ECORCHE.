@@ -35,6 +35,7 @@
         logMap: logMap,
         notesMap: notesMap,
         sessionsMap: sessionsMap,
+        timers: window.__legacySessionTimers ? window.__legacySessionTimers.read() : {},
         prefs: {
           autoRest: autoRestEnabled,
           audio: audioEnabled,
@@ -53,6 +54,7 @@
         sessionsMap = s.sessionsMap;
         saveUnifiedState();
         flushUnifiedState();
+        if (window.__legacySessionTimers) window.__legacySessionTimers.replace(s.timers || {});
 
         var p = s.prefs;
         if (p) {

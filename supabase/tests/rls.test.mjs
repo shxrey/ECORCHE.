@@ -33,7 +33,8 @@ await db.exec(`insert into public.set_logs (user_id, exercise_key, log_date, set
 await db.exec(migration('0002_sync.sql'));
 await db.exec(migration('0003_delete_account.sql'));
 await db.exec(migration('0004_weight_unit.sql'));
-console.log('✓ migrations applied (0002 on top of existing data, then 0003 and 0004)');
+await db.exec(migration('0005_session_timers.sql'));
+console.log('✓ migrations applied (0002 on top of existing data, then 0003 to 0005)');
 
 const counts = await db.query(`select (select count(*) from public.profiles) p, (select count(*) from public.user_settings) s`);
 console.log('✓ signup trigger created rows:', counts.rows[0]);
@@ -129,6 +130,18 @@ r = await pull(A);
 check(r.settings.weight_unit === 'lb' && r.settings.mesocycle_week === 2, "a page loaded before the update (no weight_unit) doesn't reset the unit");
 check(await fails(A, `select public.sync_push($1::jsonb)`, [JSON.stringify({ settings: { weight_unit: 'stone', ts: '2026-11-23T14:00:00Z' } })]), 'rejects any unit except kg and lb');
 
+// ---------- workout timers (0005) ----------
+const S = '2026-11-24T10:00:00Z';
+await push(A, { timers: [{ day_id: 'legsA', started_at: S, ts: S }] });
+r = await pull(A);
+check(r.timers.length === 1 && r.timers[0].day_id === 'legsA' && Date.parse(r.timers[0].started_at) === Date.parse(S), 'a running workout timer syncs');
+await push(A, { timers: [{ day_id: 'legsA', started_at: null, ts: '2026-11-24T09:00:00Z' }] });
+check(Date.parse((await pull(A)).timers[0].started_at) === Date.parse(S), 'an older timer change never overwrites a newer one');
+await push(A, { timers: [{ day_id: 'legsA', started_at: null, ts: '2026-11-24T11:00:00Z' }] });
+check((await pull(A)).timers[0].started_at === null, 'a reset clears the timer, and is kept so other devices hear about it');
+check(await fails(A, `select public.sync_push($1::jsonb)`, [JSON.stringify({ timers: [{ day_id: 'armsA', started_at: S, ts: S }] })]), 'rejects a timer for a day that does not exist');
+check((await pull(B)).timers.length === 0, "sync_pull never returns another lifter's timers");
+
 // ---------- account deletion (delete_my_account, 0003) ----------
 check(await fails(null, `select public.delete_my_account()`), 'anonymous visitors cannot call delete_my_account');
 await push(B, {
@@ -145,9 +158,10 @@ const left = await db.query(`select (select count(*) from auth.users where id = 
                                     (select count(*) from public.set_checks where user_id = '${A}') c,
                                     (select count(*) from public.daily_set_counts where user_id = '${A}') d,
                                     (select count(*) from public.profiles where id = '${A}') p,
-                                    (select count(*) from public.user_settings where user_id = '${A}') st`);
+                                    (select count(*) from public.user_settings where user_id = '${A}') st,
+                                    (select count(*) from public.active_sessions where user_id = '${A}') t`);
 const l = Object.fromEntries(Object.entries(left.rows[0]).map(([k, v]) => [k, Number(v)]));
-check(l.u + l.s + l.c + l.d + l.p + l.st === 0, "delete_my_account removes the caller's account and all of their data");
+check(l.u + l.s + l.c + l.d + l.p + l.st + l.t === 0, "delete_my_account removes the caller's account and all of their data");
 
 const bAfter = await db.query(`select (select count(*) from auth.users where id = '${B}') u,
                                       (select count(*) from public.set_logs where user_id = '${B}') s,

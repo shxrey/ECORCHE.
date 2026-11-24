@@ -10,6 +10,7 @@
  *   l|<exercise>|<date>|<set>  weight / reps / RIR     → set_logs
  *   n|<exercise>|<date>        note                    → exercise_notes
  *   d|<date>                   sets done that day      → daily_set_counts
+ *   t|<day>                    workout timer start     → active_sessions
  *   s                          preferences             → user_settings
  *
  * A key missing from a RecordMap means "no value" (unticked, cleared, …).
@@ -41,6 +42,8 @@ export interface LegacyState {
   logMap: Record<string, Record<string, Record<string, LegacyLogEntry>>>;
   notesMap: Record<string, Record<string, string>>;
   sessionsMap: Record<string, number>;
+  /** Running workout timers: day ("legsA") → when its first set was ticked (ms since epoch). */
+  timers: Record<string, number>;
   prefs: LegacyPrefs;
 }
 
@@ -67,6 +70,8 @@ export interface Change {
 const EXERCISE_KEY = /^(push|pull|legs)-[ab][1-9][0-9]?$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const SET_KEY = /^(.*)-set(\d+)$/;
+
+const DAY_ID = /^(push|pull|legs)[AB]$/;
 
 const isExercise = (k: string) => EXERCISE_KEY.test(k);
 const isDate = (d: string) => DATE.test(d) && !Number.isNaN(Date.parse(d));
@@ -136,6 +141,10 @@ export function flatten(state: LegacyState): RecordMap {
     if (isDate(date) && Number.isInteger(count) && count > 0 && count <= 2000) out[`d|${date}`] = count;
   }
 
+  for (const [day, start] of Object.entries(state.timers ?? {})) {
+    if (DAY_ID.test(day) && typeof start === 'number' && Number.isFinite(start) && start > 0) out[`t|${day}`] = start;
+  }
+
   out.s = normalizePrefs(state.prefs);
   return out;
 }
@@ -168,6 +177,7 @@ export function applyChanges(state: LegacyState, changes: Pick<Change, 'key' | '
   s.logMap ??= {};
   s.notesMap ??= {};
   s.sessionsMap ??= {};
+  s.timers ??= {};
 
   for (const { key, value } of changes) {
     const [kind, a, b, c] = key.split('|');
@@ -191,6 +201,9 @@ export function applyChanges(state: LegacyState, changes: Pick<Change, 'key' | '
     } else if (kind === 'd') {
       if (typeof value === 'number' && value > 0) s.sessionsMap[a] = value;
       else delete s.sessionsMap[a];
+    } else if (kind === 't') {
+      if (typeof value === 'number' && value > 0) s.timers[a] = value;
+      else delete s.timers[a];
     } else if (kind === 's') {
       if (value && typeof value === 'object' && 'mesocycleWeek' in value) s.prefs = normalizePrefs(value);
     }
@@ -199,7 +212,30 @@ export function applyChanges(state: LegacyState, changes: Pick<Change, 'key' | '
 }
 
 export function emptyState(prefs?: Partial<LegacyPrefs>): LegacyState {
-  return { doneMap: {}, logMap: {}, notesMap: {}, sessionsMap: {}, prefs: normalizePrefs(prefs) };
+  return { doneMap: {}, logMap: {}, notesMap: {}, sessionsMap: {}, timers: {}, prefs: normalizePrefs(prefs) };
+}
+
+// ---------- workout timers ----------
+
+/**
+ * The app forgets a workout timer this old on its next load: it was left
+ * running, it isn't a live session (scripts: SESSION_TIMER_STALE_MS).
+ */
+export const TIMER_MAX_AGE_MS = 6 * 60 * 60 * 1000;
+
+export const isStaleTimer = (key: string, value: RecordValue | null | undefined, now: number) =>
+  key.startsWith('t|') && typeof value === 'number' && now - value >= TIMER_MAX_AGE_MS;
+
+/**
+ * Leaves out timers too old to be a live session. Sync compares snapshots
+ * with these removed, so an old timer quietly expiring on one device is
+ * never mistaken for a reset (which would cancel a session that has just
+ * been started on another device).
+ */
+export function withoutStaleTimers(records: RecordMap, now: number): RecordMap {
+  const out: RecordMap = {};
+  for (const [key, value] of Object.entries(records)) if (!isStaleTimer(key, value, now)) out[key] = value;
+  return out;
 }
 
 // ---------- records ↔ database rows ----------
@@ -212,6 +248,8 @@ export interface PushPayload {
   }[];
   notes: { exercise_key: string; note_date: string; body: string; ts: string }[];
   days: { day: string; sets: number; ts: string }[];
+  /** started_at null = that day's timer was reset. */
+  timers: { day_id: string; started_at: string | null; ts: string }[];
   settings?: {
     auto_rest: boolean; voice_announcements: boolean; high_contrast: boolean; mesocycle_week: number;
     weight_unit: WeightUnit; ts: string;
@@ -224,13 +262,15 @@ export interface PullResult {
   logs: PushPayload['logs'];
   notes: PushPayload['notes'];
   days: PushPayload['days'];
+  /** Missing from a database that hasn't had 0005_session_timers.sql yet. */
+  timers?: PushPayload['timers'];
   settings: PushPayload['settings'] | null;
 }
 
 const iso = (ms: number) => new Date(ms).toISOString();
 
 export function toPushPayload(changes: Change[]): PushPayload {
-  const p: PushPayload = { checks: [], logs: [], notes: [], days: [] };
+  const p: PushPayload = { checks: [], logs: [], notes: [], days: [], timers: [] };
   for (const { key, value, ts } of changes) {
     const [kind, a, b, c] = key.split('|');
     if (kind === 'c') {
@@ -245,6 +285,8 @@ export function toPushPayload(changes: Change[]): PushPayload {
       p.notes.push({ exercise_key: a, note_date: b, body: typeof value === 'string' ? value : '', ts: iso(ts) });
     } else if (kind === 'd') {
       p.days.push({ day: a, sets: typeof value === 'number' ? value : 0, ts: iso(ts) });
+    } else if (kind === 't') {
+      p.timers.push({ day_id: a, started_at: typeof value === 'number' ? iso(value) : null, ts: iso(ts) });
     } else if (kind === 's' && value && typeof value === 'object' && 'mesocycleWeek' in value) {
       p.settings = {
         auto_rest: value.autoRest, voice_announcements: value.audio,
@@ -273,6 +315,10 @@ export function fromPullResult(r: PullResult): Change[] {
   }
   for (const x of r.days ?? []) {
     out.push({ key: `d|${x.day}`, value: x.sets > 0 ? x.sets : null, ts: ms(x.ts) });
+  }
+  for (const x of r.timers ?? []) {
+    const start = x.started_at ? Date.parse(x.started_at) : NaN;
+    out.push({ key: `t|${x.day_id}`, value: start > 0 ? start : null, ts: ms(x.ts) });
   }
   if (r.settings) {
     out.push({
