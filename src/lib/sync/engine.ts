@@ -1,5 +1,5 @@
 import {
-  applyChanges, diff, emptyState, flatten, fromPullResult, sameValue, toPushPayload,
+  applyChanges, diff, emptyState, flatten, fromPullResult, normalizePrefs, sameValue, toPushPayload,
   type Change, type LegacyState, type PullResult, type PushPayload, type RecordMap, type RecordValue,
 } from './model';
 
@@ -58,6 +58,20 @@ const UNKNOWN_AGE = 1;
 const fresh = (owner: string | null): SyncMeta => ({ v: 1, owner, cursor: null, shadow: null, pending: {} });
 
 /**
+ * A snapshot saved before a preference existed (e.g. the weight unit) gets
+ * that preference's default. Otherwise the next capture would see "settings
+ * changed", stamp them with the current time and push them, overwriting
+ * newer settings from another device that this one hasn't pulled yet.
+ */
+function withCurrentPrefs(meta: SyncMeta): SyncMeta {
+  const s = meta.shadow?.s;
+  if (meta.shadow && s && typeof s === 'object' && 'mesocycleWeek' in s) meta.shadow.s = normalizePrefs(s);
+  const p = meta.pending.s?.value;
+  if (p && typeof p === 'object' && 'mesocycleWeek' in p) meta.pending.s.value = normalizePrefs(p);
+  return meta;
+}
+
+/**
  * Offline-first, last-write-wins sync between this device and the lifter's
  * account. The device always works on its own copy (the legacy app never
  * waits on the network); the engine catches up whenever it can:
@@ -87,7 +101,7 @@ export class SyncEngine {
   ) {
     const saved = store.load();
     if (saved?.v === 1 && saved.owner === userId) {
-      this.meta = saved;
+      this.meta = withCurrentPrefs(saved);
     } else if (saved?.owner && saved.owner !== userId) {
       // This device was synced to a different account. Keep a copy of that
       // progress, then start this lifter from their own cloud data.

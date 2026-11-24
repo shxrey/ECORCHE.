@@ -96,6 +96,15 @@ const rebrand = [
   ['footer', '\n  <p style="margin-top:18px;font-size:11px;letter-spacing:0.08em;color:var(--ink-dim);font-family:var(--font-mono);">~ shrey</p>',
     '\n  <p class="footer-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="mailto:support@ecorche.app">Contact</a></p>' +
     '\n  <p style="margin-top:18px;font-size:11px;letter-spacing:0.08em;color:var(--ink-dim);font-family:var(--font-mono);">~ shrey</p>'],
+  // kg / lb switch (2026-11-24) beside Auto-Rest; logic in scripts/legacy-units.js,
+  // styled in src/styles/overrides.css. Starts on kg; the script marks the saved unit.
+  ['tracker', '<div class="tracker-settings-row">\n',
+    '<div class="tracker-settings-row">\n' +
+    '      <div class="unit-toggle" role="group" aria-label="Weight unit">\n' +
+    '        <span class="unit-toggle-label" aria-hidden="true">Units</span>\n' +
+    '        <button type="button" class="active" data-unit="kg" aria-pressed="true" onclick="setWeightUnit(\'kg\')">kg</button>\n' +
+    '        <button type="button" data-unit="lb" aria-pressed="false" onclick="setWeightUnit(\'lb\')">lb</button>\n' +
+    '      </div>\n'],
 ];
 for (const [key, from, to] of rebrand) {
   if (!fragments[key].includes(from)) throw new Error(`rebrand target missing in ${key}: ${from}`);
@@ -328,6 +337,72 @@ const patches = [
    `a.download = 'ecorche-log-' + todayKey() + '.csv';`],
   [`suggestedName: 'hypertrophy-progress-autobackup.json',`,
    `suggestedName: 'ecorche-autobackup.json',`],
+
+  // ---- kg / lb switch (2026-11-24) ----
+  // Saved weights stay in kilograms (see scripts/legacy-units.js); every place
+  // that reads a weight box or prints a weight goes through its helpers.
+  [`  // ===== LOCAL STORAGE — VOICE ANNOUNCEMENT PREFERENCE =====\n`,
+   readFileSync(resolve(root, 'scripts/legacy-units.js'), 'utf8').replace(/\r\n/g, '\n') +
+   `  // ===== LOCAL STORAGE — VOICE ANNOUNCEMENT PREFERENCE =====\n`],
+  // Weight boxes: what's typed is saved as kg; what's saved is shown in the chosen unit.
+  [`class="log-input log-weight" placeholder="kg" data-set="' + i + '">'`,
+   `class="log-input log-weight" placeholder="' + weightUnit + '" data-set="' + i + '">'`],
+  [`'<textarea class="exercise-notes" placeholder="Notes — e.g. elbows flared on set 2, drop 2.5kg next time"></textarea>'`,
+   `'<textarea class="exercise-notes" placeholder="' + notesPlaceholder() + '"></textarea>'`],
+  [`    if (!row) return;\n    const w = row.querySelector('.log-weight').value;\n`,
+   `    if (!row) return;\n    const w = weightInputToKg(row.querySelector('.log-weight'));\n`],
+  [`    card.querySelectorAll('.set-log-row').forEach(row => {\n      const w = row.querySelector('.log-weight').value;\n`,
+   `    card.querySelectorAll('.set-log-row').forEach(row => {\n      const w = weightInputToKg(row.querySelector('.log-weight'));\n`],
+  // data-kg remembers the exact saved/suggested kg each box was filled with.
+  [`wEl.value = data.w || ''; rEl.value`,
+   `wEl.value = weightToInput(data.w); wEl.setAttribute('data-kg', data.w || ''); rEl.value`],
+  [`wEl.value = prior && prior.w ? prior.w : '';`,
+   `wEl.value = prior && prior.w ? weightToInput(prior.w) : ''; wEl.setAttribute('data-kg', prior && prior.w ? prior.w : '');`],
+  // Weights shown as text.
+  [`if (row.w) parts.push(row.w + 'kg');`,
+   `if (row.w) parts.push(weightToInput(row.w) + weightUnit);`],
+  [`el.textContent = best ? 'Est. 1RM: ~' + (Math.round(best * 10) / 10) + 'kg' : '';`,
+   `el.textContent = best ? 'Est. 1RM: ~' + formatEstimate(best) : '';`],
+  [`bar.title = p.d + (p.est ? ': ~' + Math.round(p.est * 10) / 10 + 'kg e1RM' : ': no weight logged');`,
+   `bar.title = p.d + (p.est ? ': ~' + formatEstimate(p.est) + ' e1RM' : ': no weight logged');`],
+  // ▲/▼ badges and PRs compare weights as shown, so a weight that round-trips
+  // through lb (60kg → 132.3lb → 60.01kg) never reads as a tiny gain. The badge
+  // keeps 2 decimals, so a 1.25lb jump no longer shows as "+1.3".
+  [`    const w = parseFloat(row.querySelector('.log-weight').value);\n`,
+   `    const w = toUnit(weightInputToKg(row.querySelector('.log-weight')));\n`],
+  [`    const priorW = prior ? parseFloat(prior.w) : NaN;\n`,
+   `    const priorW = prior ? toUnit(prior.w) : NaN;\n`],
+  [`      const diff = Math.round((w - priorW) * 10) / 10;\n      badge.textContent = '▲ +' + diff + 'kg ready';`,
+   `      const diff = Math.round((w - priorW) * 100) / 100;\n      badge.textContent = '▲ +' + diff + weightUnit + ' ready';`],
+  [`const w = parseFloat(entry && entry.w);`,
+   `const w = toUnit(entry && entry.w);`],
+  [`const w = parseFloat(entry.w);`,
+   `const w = toUnit(entry.w);`],
+  // Warm-up steps round to the smallest plate jump: 2 × 1.25kg, or 2 × 2.5lb.
+  [`    const round25 = n => Math.round(n / 2.5) * 2.5;\n`,
+   `    const plate = weightUnit === 'lb' ? 5 : 2.5;\n    const round25 = n => Math.round(n / plate) * plate;\n`],
+  [`'%: <b>' + w + 'kg</b></span>'`,
+   `'%: <b>' + w + weightUnit + '</b></span>'`],
+  // CSV export: weights in the chosen unit, and the header says which.
+  [`const rows = [['date', 'exercise', 'set', 'weight_kg', 'reps', 'rir']];`,
+   `const rows = [['date', 'exercise', 'set', 'weight_' + weightUnit, 'reps', 'rir']];`],
+  [`rows.push([date, exKey, setIdx, s.w || '', s.r || '', s.rir || '']);`,
+   `rows.push([date, exKey, setIdx, weightToInput(s.w), s.r || '', s.rir || '']);`],
+  // Backups remember the unit (manual export, then auto-backup); importing restores it.
+  [`      sessionsMap: sessionsMap,\n      preferences: { autoRestEnabled: autoRestEnabled, audioEnabled: audioEnabled }\n`,
+   `      sessionsMap: sessionsMap,\n      preferences: { autoRestEnabled: autoRestEnabled, audioEnabled: audioEnabled, weightUnit: weightUnit }\n`],
+  [`        sessionsMap: sessionsMap,\n        preferences: { autoRestEnabled: autoRestEnabled, audioEnabled: audioEnabled }\n`,
+   `        sessionsMap: sessionsMap,\n        preferences: { autoRestEnabled: autoRestEnabled, audioEnabled: audioEnabled, weightUnit: weightUnit }\n`],
+  [`              if (typeof updateAudioBtn === 'function') updateAudioBtn();\n            }\n`,
+   `              if (typeof updateAudioBtn === 'function') updateAudioBtn();\n            }\n` +
+   `            if (prefsToApply.weightUnit === 'kg' || prefsToApply.weightUnit === 'lb') {\n` +
+   `              weightUnit = prefsToApply.weightUnit;\n` +
+   `              saveWeightUnit(weightUnit);\n` +
+   `              applyWeightUnit();\n` +
+   `            }\n`],
+  // Mark the stored unit on the switch at start-up.
+  [`  initAutoRestToggle();\n`,
+   `  initAutoRestToggle();\n  applyWeightUnit();\n`],
 ];
 for (const [from, to] of patches) {
   // Exactly one match, so a patch can never land somewhere unintended.
@@ -355,11 +430,11 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
 const bridge = readFileSync(resolve(root, 'scripts/legacy-bridge.js'), 'utf8');
 for (const name of ['saveUnifiedState', 'flushUnifiedState', 'saveAutoRest', 'saveAudioEnabled', 'saveHighContrast',
   'saveMesocycleWeek', 'updateAudioBtn', 'applyHighContrast', 'renderMesocycleBanner', 'updateSetDotAria',
-  'applyStoredCompletion', 'initExerciseEnhancements', 'renderHistory']) {
+  'applyStoredCompletion', 'initExerciseEnhancements', 'renderHistory', 'saveWeightUnit', 'applyWeightUnit']) {
   if (!new RegExp(`\\n  function ${name}\\(`).test(js)) throw new Error('legacy bridge: function not found: ' + name);
 }
 for (const name of ['doneMap', 'logMap', 'notesMap', 'sessionsMap', 'autoRestEnabled', 'audioEnabled',
-  'highContrastEnabled', 'mesocycleWeek']) {
+  'highContrastEnabled', 'mesocycleWeek', 'weightUnit']) {
   if (!new RegExp(`\\n  let ${name} =`).test(js)) throw new Error('legacy bridge: top-level let not found: ' + name);
 }
 write('public/legacy/protocol.js', bootstrap + js + bridge);

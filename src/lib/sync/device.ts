@@ -53,6 +53,8 @@ function readSavedState(): LegacyState {
       audio: flag('hb_audioEnabled_v1', true),
       highContrast: flag('hb_highContrast_v1', false),
       mesocycleWeek: week >= 1 && week <= 6 ? week : 1,
+      // Stored as plain text ('kg' / 'lb'), not JSON.
+      unit: localStorage.getItem('hb_weightUnit_v1') === 'lb' ? 'lb' : 'kg',
     },
   };
 }

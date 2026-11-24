@@ -25,11 +25,15 @@ export interface LegacyLogEntry {
   pr?: boolean;
 }
 
+/** How weights are shown and typed. Saved weights are always kilograms. */
+export type WeightUnit = 'kg' | 'lb';
+
 export interface LegacyPrefs {
   autoRest: boolean;
   audio: boolean;
   highContrast: boolean;
   mesocycleWeek: number;
+  unit: WeightUnit;
 }
 
 export interface LegacyState {
@@ -87,13 +91,15 @@ export function normalizeLog(e: LegacyLogEntry | null | undefined): LogValue | n
   return { w, r, rir, pr: e.pr === true };
 }
 
-function normalizePrefs(p: Partial<LegacyPrefs> | null | undefined): LegacyPrefs {
+/** Fills in defaults, including for preferences added after a snapshot was saved. */
+export function normalizePrefs(p: Partial<LegacyPrefs> | null | undefined): LegacyPrefs {
   const week = Number(p?.mesocycleWeek);
   return {
     autoRest: p?.autoRest !== false,
     audio: p?.audio !== false,
     highContrast: p?.highContrast === true,
     mesocycleWeek: Number.isInteger(week) && week >= 1 && week <= 6 ? week : 1,
+    unit: p?.unit === 'lb' ? 'lb' : 'kg',
   };
 }
 
@@ -192,7 +198,7 @@ export function applyChanges(state: LegacyState, changes: Pick<Change, 'key' | '
   return s;
 }
 
-export function emptyState(prefs?: LegacyPrefs): LegacyState {
+export function emptyState(prefs?: Partial<LegacyPrefs>): LegacyState {
   return { doneMap: {}, logMap: {}, notesMap: {}, sessionsMap: {}, prefs: normalizePrefs(prefs) };
 }
 
@@ -207,7 +213,8 @@ export interface PushPayload {
   notes: { exercise_key: string; note_date: string; body: string; ts: string }[];
   days: { day: string; sets: number; ts: string }[];
   settings?: {
-    auto_rest: boolean; voice_announcements: boolean; high_contrast: boolean; mesocycle_week: number; ts: string;
+    auto_rest: boolean; voice_announcements: boolean; high_contrast: boolean; mesocycle_week: number;
+    weight_unit: WeightUnit; ts: string;
   };
 }
 
@@ -241,7 +248,7 @@ export function toPushPayload(changes: Change[]): PushPayload {
     } else if (kind === 's' && value && typeof value === 'object' && 'mesocycleWeek' in value) {
       p.settings = {
         auto_rest: value.autoRest, voice_announcements: value.audio,
-        high_contrast: value.highContrast, mesocycle_week: value.mesocycleWeek, ts: iso(ts),
+        high_contrast: value.highContrast, mesocycle_week: value.mesocycleWeek, weight_unit: value.unit, ts: iso(ts),
       };
     }
   }
@@ -273,6 +280,7 @@ export function fromPullResult(r: PullResult): Change[] {
       value: normalizePrefs({
         autoRest: r.settings.auto_rest, audio: r.settings.voice_announcements,
         highContrast: r.settings.high_contrast, mesocycleWeek: r.settings.mesocycle_week,
+        unit: r.settings.weight_unit,
       }),
       ts: ms(r.settings.ts),
     });

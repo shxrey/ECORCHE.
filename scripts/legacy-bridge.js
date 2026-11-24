@@ -26,6 +26,7 @@
   saveAudioEnabled = thenNotify(saveAudioEnabled);
   saveHighContrast = thenNotify(saveHighContrast);
   saveMesocycleWeek = thenNotify(saveMesocycleWeek);
+  saveWeightUnit = thenNotify(saveWeightUnit);
 
   window.__legacyBridge = {
     readState: function () {
@@ -38,7 +39,8 @@
           autoRest: autoRestEnabled,
           audio: audioEnabled,
           highContrast: highContrastEnabled,
-          mesocycleWeek: mesocycleWeek
+          mesocycleWeek: mesocycleWeek,
+          unit: weightUnit
         }
       }));
     },
@@ -70,6 +72,11 @@
           mesocycleWeek = p.mesocycleWeek;
           saveMesocycleWeek(mesocycleWeek);
           renderMesocycleBanner();
+
+          // Weights are re-shown in this unit by initExerciseEnhancements() below.
+          weightUnit = p.unit === 'lb' ? 'lb' : 'kg';
+          saveWeightUnit(weightUnit);
+          applyWeightUnit();
         }
 
         // Same refresh sequence importProgress() uses after a restore.

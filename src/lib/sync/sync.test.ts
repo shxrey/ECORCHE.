@@ -5,8 +5,8 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { SyncEngine, SyncError, type SyncBridge, type SyncMeta, type SyncRemote, type SyncStore } from './engine';
 import {
-  applyChanges, emptyState, flatten, normalizeLog,
-  type LegacyState, type PullResult, type PushPayload,
+  applyChanges, emptyState, flatten, fromPullResult, normalizeLog, normalizePrefs, toPushPayload,
+  type LegacyPrefs, type LegacyState, type PullResult, type PushPayload,
 } from './model';
 import { forgetDeviceProgress, uploadBeforeSignOut } from './device';
 
@@ -24,8 +24,11 @@ const rowKey: Record<Table, (r: Record<string, unknown>) => string> = {
 class FakeServer {
   clock = Date.parse('2026-11-23T00:00:00Z');
   rows = new Map<string, { table: Table; row: Record<string, unknown>; updated: number }>();
-  settings = {
-    row: { auto_rest: true, voice_announcements: true, high_contrast: false, mesocycle_week: 1, ts: new Date(0).toISOString() },
+  settings: { row: NonNullable<PushPayload['settings']>; updated: number } = {
+    row: {
+      auto_rest: true, voice_announcements: true, high_contrast: false, mesocycle_week: 1, weight_unit: 'kg',
+      ts: new Date(0).toISOString(),
+    },
     updated: this.clock,
   };
   reject: (row: Record<string, unknown>) => boolean = () => false;
@@ -121,7 +124,7 @@ const log = (s: LegacyState, ex: string, date: string, set: number, w: string, r
 
 describe('model', () => {
   it('round-trips a full state through records', () => {
-    const s = emptyState({ autoRest: false, audio: true, highContrast: true, mesocycleWeek: 4 });
+    const s = emptyState({ autoRest: false, audio: true, highContrast: true, mesocycleWeek: 4, unit: 'lb' });
     tick(s, 'push-a1', 1);
     tick(s, 'legs-b7', 3);
     log(s, 'push-a1', '2026-11-20', 1, '62.5', '8', '1');
@@ -140,6 +143,16 @@ describe('model', () => {
     assert.equal(normalizeLog({ w: '60', r: '8.5' }), undefined, 'fractional reps');
     assert.equal(normalizeLog({ w: '2500', r: '1' }), undefined, 'over 2000 kg');
     assert.equal(normalizeLog({ w: 'abc', r: '1' }), undefined);
+  });
+
+  it('carries the weight unit to the database and back; everyone starts on kg', () => {
+    const prefs: LegacyPrefs = { autoRest: true, audio: false, highContrast: false, mesocycleWeek: 2, unit: 'lb' };
+    const payload = toPushPayload([{ key: 's', value: prefs, ts: 5 }]);
+    assert.equal(payload.settings?.weight_unit, 'lb');
+    const [back] = fromPullResult({ server_time: '', checks: [], logs: [], notes: [], days: [], settings: payload.settings! });
+    assert.deepEqual(back.value, prefs);
+    assert.equal(normalizePrefs({}).unit, 'kg');
+    assert.equal(normalizePrefs({ unit: 'stone' as never }).unit, 'kg', 'anything unexpected falls back to kg');
   });
 
   it('skips records with unknown exercises or set labels instead of failing', () => {
@@ -298,11 +311,31 @@ describe('engine', () => {
     const p = phone.connect(USER, server), l = laptop.connect(USER, server);
     await p.sync();
     await l.sync();
-    phone.edit(s => { s.prefs = { ...s.prefs, mesocycleWeek: 3, highContrast: true }; });
+    phone.edit(s => { s.prefs = { ...s.prefs, mesocycleWeek: 3, highContrast: true, unit: 'lb' }; });
     await p.sync();
     await l.sync();
     assert.equal(laptop.state.prefs.mesocycleWeek, 3);
     assert.equal(laptop.state.prefs.highContrast, true);
+    assert.equal(laptop.state.prefs.unit, 'lb');
+  });
+
+  it("a device last synced before the unit setting existed doesn't overwrite newer settings", async () => {
+    const server = new FakeServer();
+    const phone = new Device(), laptop = new Device();
+    await phone.connect(USER, server).sync();
+    const l = laptop.connect(USER, server);
+    await l.sync();
+    // The phone's saved snapshot comes from the app before the update: it has no unit.
+    const old: Partial<LegacyPrefs> = { ...(phone.stored!.shadow!.s as LegacyPrefs) };
+    delete old.unit;
+    phone.stored!.shadow!.s = old as LegacyPrefs;
+    // The laptop changes the training week; later the phone opens the updated app.
+    laptop.edit(s => { s.prefs = { ...s.prefs, mesocycleWeek: 3 }; });
+    await l.sync();
+    phone.time = laptop.time + 60 * 60_000;
+    await phone.connect(USER, server).sync();
+    assert.equal(server.settings.row.mesocycle_week, 3, "the phone's stale settings weren't pushed");
+    assert.equal(phone.state.prefs.mesocycleWeek, 3, "the phone took the laptop's change");
   });
 });
 
@@ -366,6 +399,16 @@ describe('sign-out', () => {
     assert.ok(left > 0, 'unsent changes reported');
     assert.equal(server.get('checks|push-a1|1'), undefined);
     assert.ok(data.has('hb_state_v1'), 'nothing removed');
+  });
+
+  it('keeps the weight unit (the account page reads it from the device too)', async () => {
+    const data = fakeStorage();
+    const server = new FakeServer();
+    deviceWithUnsyncedEdit(data);
+    data.set('hb_weightUnit_v1', 'lb');
+
+    assert.equal(await uploadBeforeSignOut(fakeSupabase(server), USER), 0);
+    assert.equal(server.settings.row.weight_unit, 'lb');
   });
 
   it("never uploads another account's progress", async () => {

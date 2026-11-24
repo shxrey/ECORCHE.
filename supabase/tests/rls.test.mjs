@@ -1,7 +1,7 @@
 // Security + sync test for the database. Applies every migration in
 // supabase/migrations to an in-memory Postgres (PGlite) with a minimal stand-in
 // for Supabase's auth schema, exactly the way production gets them (0001 with
-// data already in it, then 0002), and proves:
+// data already in it, then 0002 onwards), and proves:
 //   • constraints and row-level security isolate every lifter
 //   • sync_push / sync_pull are last-write-wins and can't be abused
 //   npm run test:db
@@ -32,7 +32,8 @@ await db.exec(`insert into public.set_logs (user_id, exercise_key, log_date, set
                values ('${B}','legs-a1','2026-11-01',1,true,100)`);
 await db.exec(migration('0002_sync.sql'));
 await db.exec(migration('0003_delete_account.sql'));
-console.log('✓ migrations applied (0002 on top of existing data, then 0003)');
+await db.exec(migration('0004_weight_unit.sql'));
+console.log('✓ migrations applied (0002 on top of existing data, then 0003 and 0004)');
 
 const counts = await db.query(`select (select count(*) from public.profiles) p, (select count(*) from public.user_settings) s`);
 console.log('✓ signup trigger created rows:', counts.rows[0]);
@@ -117,6 +118,16 @@ check((await pull(A)).checks[0].checked === false, "user B's push can't touch us
 check(await fails(null, `select public.sync_push('{}'::jsonb)`), 'anonymous visitors cannot call sync_push');
 check(await fails(null, `select public.sync_pull(null)`), 'anonymous visitors cannot call sync_pull');
 check(await fails(A, `select public.sync_push($1::jsonb)`, [JSON.stringify({ checks: [{ exercise_key: 'squat', set_idx: 1, checked: true, ts: T2 }] })]), 'sync_push still enforces constraints');
+
+// ---------- weight unit (0004) ----------
+check((await as(B, `select weight_unit from public.user_settings`)).rows[0]?.weight_unit === 'kg', 'existing lifters start on kg');
+const T3 = '2026-11-23T12:00:00Z', T4 = '2026-11-23T13:00:00Z';
+await push(A, { settings: { weight_unit: 'lb', ts: T3 } });
+check((await pull(A)).settings.weight_unit === 'lb', 'the weight unit syncs like any other setting');
+await push(A, { settings: { auto_rest: true, voice_announcements: true, high_contrast: false, mesocycle_week: 2, ts: T4 } });
+r = await pull(A);
+check(r.settings.weight_unit === 'lb' && r.settings.mesocycle_week === 2, "a page loaded before the update (no weight_unit) doesn't reset the unit");
+check(await fails(A, `select public.sync_push($1::jsonb)`, [JSON.stringify({ settings: { weight_unit: 'stone', ts: '2026-11-23T14:00:00Z' } })]), 'rejects any unit except kg and lb');
 
 // ---------- account deletion (delete_my_account, 0003) ----------
 check(await fails(null, `select public.delete_my_account()`), 'anonymous visitors cannot call delete_my_account');

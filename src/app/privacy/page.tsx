@@ -44,7 +44,7 @@ export default function PrivacyPage() {
         <li>
           <strong>Your training data:</strong> completed sets, weights, reps, reps in reserve (RIR), personal-record markers,
           exercise notes, sets completed per day, and app settings (auto rest timer, voice cues, high-contrast mode,
-          training week).
+          training week, kg or lb).
         </li>
       </ul>
       <h3>When anyone visits</h3>

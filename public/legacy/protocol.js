@@ -207,6 +207,86 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     applyHighContrast();
   }
 
+  // ===== LOCAL STORAGE — WEIGHT UNIT (kg / lb) =====
+  // Added in the Next.js port: scripts/extract-legacy.mjs inserts this file
+  // (scripts/legacy-units.js) next to the other preferences.
+  //
+  // Saved weights are ALWAYS kilograms: logMap, backups and the cloud copy
+  // all hold kg, so switching units never rewrites history. lb only changes
+  // what is shown and typed. A weight typed in lb is saved as kg to 2
+  // decimals (the cloud copy's precision) and shown back rounded to the
+  // nearest 0.05 lb. That rounding error is under 0.012 lb, so any weight
+  // you'd actually type (135, 137.5, 136.25) comes back exactly. PRs and the
+  // ▲/▼ badges compare these shown values too, so a weight that round-trips
+  // through lb never reads as a tiny PR or drop.
+  const WEIGHT_UNIT_KEY = 'hb_weightUnit_v1';
+  const KG_PER_LB = 0.45359237; // exact, by definition
+  function loadWeightUnit() {
+    try { return localStorage.getItem(WEIGHT_UNIT_KEY) === 'lb' ? 'lb' : 'kg'; } catch (e) { return 'kg'; }
+  }
+  function saveWeightUnit(val) {
+    try { localStorage.setItem(WEIGHT_UNIT_KEY, val); } catch (e) {}
+  }
+  let weightUnit = loadWeightUnit();
+
+  // A saved (kg) weight as a number in the chosen unit; NaN when blank.
+  function toUnit(kg) {
+    const n = parseFloat(kg);
+    if (isNaN(n)) return NaN;
+    return weightUnit === 'lb' ? Math.round(n / KG_PER_LB * 20) / 20 : n;
+  }
+  // A saved (kg) weight as weight-box text. In kg it's shown exactly as typed.
+  function weightToInput(kg) {
+    if (kg === '' || kg == null) return '';
+    if (weightUnit === 'kg') return String(kg);
+    const n = toUnit(kg);
+    return isNaN(n) ? '' : String(Math.round(n * 100) / 100);
+  }
+  // Weight-box text → the value to save (kg). In kg it's saved exactly as typed.
+  function inputToKg(val) {
+    if (weightUnit === 'kg' || val === '' || val == null) return val;
+    const n = parseFloat(val);
+    return isNaN(n) ? val : String(Math.round(n * KG_PER_LB * 100) / 100);
+  }
+  // A weight box → the value to save (kg). A box still showing, unchanged, the
+  // saved or suggested weight it was filled with (data-kg) keeps that exact kg
+  // value, so 100kg shown as 220.45lb isn't re-saved as 99.99kg.
+  function weightInputToKg(el) {
+    const filled = el.getAttribute('data-kg');
+    if (weightUnit === 'lb' && filled !== null && weightToInput(filled) === el.value) return filled;
+    return inputToKg(el.value);
+  }
+  // An estimated 1RM (kg, unrounded) as text: "102.5kg", "226lb".
+  function formatEstimate(kg) {
+    const n = weightUnit === 'lb' ? kg / KG_PER_LB : kg;
+    return (Math.round(n * 10) / 10) + weightUnit;
+  }
+  function notesPlaceholder() {
+    return 'Notes — e.g. elbows flared on set 2, drop ' + (weightUnit === 'lb' ? '5lb' : '2.5kg') + ' next time';
+  }
+  // Brings the switch, the box placeholders and any open warm-up list in line with weightUnit.
+  function applyWeightUnit() {
+    document.querySelectorAll('.unit-toggle [data-unit]').forEach(btn => {
+      const on = btn.getAttribute('data-unit') === weightUnit;
+      btn.classList.toggle('active', on);
+      btn.setAttribute('aria-pressed', String(on));
+    });
+    document.querySelectorAll('.log-weight').forEach(el => { el.placeholder = weightUnit; });
+    document.querySelectorAll('.exercise-notes').forEach(el => { el.placeholder = notesPlaceholder(); });
+    // Warm-up steps were worked out in the old unit: close them (one tap reopens).
+    document.querySelectorAll('.warmup-calc.open').forEach(el => { el.classList.remove('open'); el.innerHTML = ''; });
+  }
+  function setWeightUnit(val) {
+    const next = val === 'lb' ? 'lb' : 'kg';
+    if (next === weightUnit) return;
+    weightUnit = next;
+    saveWeightUnit(weightUnit);
+    applyWeightUnit();
+    // Re-show every weight box, "Last session", e1RM, trend and ▲/▼ badge in the new unit.
+    initExerciseEnhancements();
+    showInfoToast('Weights now in ' + (weightUnit === 'lb' ? 'pounds (lb)' : 'kilograms (kg)') + '. Your logged history is unchanged.');
+  }
+
   // ===== LOCAL STORAGE — VOICE ANNOUNCEMENT PREFERENCE =====
   const AUDIO_KEY = 'hb_audioEnabled_v1';
   function loadAudioEnabled() {
@@ -550,7 +630,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       logMap: logMap,
       notesMap: notesMap,
       sessionsMap: sessionsMap,
-      preferences: { autoRestEnabled: autoRestEnabled, audioEnabled: audioEnabled }
+      preferences: { autoRestEnabled: autoRestEnabled, audioEnabled: audioEnabled, weightUnit: weightUnit }
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -579,9 +659,10 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       el.classList.add('open');
       return;
     }
-    const round25 = n => Math.round(n / 2.5) * 2.5;
+    const plate = weightUnit === 'lb' ? 5 : 2.5;
+    const round25 = n => Math.round(n / plate) * plate;
     const steps = [0.5, 0.75, 0.9].map(pct => round25(top * pct));
-    el.innerHTML = steps.map((w, i) => '<span class="warmup-step">' + [50, 75, 90][i] + '%: <b>' + w + 'kg</b></span>').join('');
+    el.innerHTML = steps.map((w, i) => '<span class="warmup-step">' + [50, 75, 90][i] + '%: <b>' + w + weightUnit + '</b></span>').join('');
     el.classList.add('open');
   }
 
@@ -594,14 +675,14 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   // any particular session, so attaching it to specific dated rows here
   // would misrepresent it as session-specific when it isn't.
   function exportCSV() {
-    const rows = [['date', 'exercise', 'set', 'weight_kg', 'reps', 'rir']];
+    const rows = [['date', 'exercise', 'set', 'weight_' + weightUnit, 'reps', 'rir']];
     Object.keys(logMap).sort().forEach(exKey => {
       Object.keys(logMap[exKey]).sort().forEach(date => {
         const sets = logMap[exKey][date];
         Object.keys(sets).map(Number).sort((a, b) => a - b).forEach(setIdx => {
           const s = sets[setIdx];
           if (!s.w && !s.r && !s.rir) return;
-          rows.push([date, exKey, setIdx, s.w || '', s.r || '', s.rir || '']);
+          rows.push([date, exKey, setIdx, weightToInput(s.w), s.r || '', s.rir || '']);
         });
       });
     });
@@ -669,7 +750,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
         logMap: logMap,
         notesMap: notesMap,
         sessionsMap: sessionsMap,
-        preferences: { autoRestEnabled: autoRestEnabled, audioEnabled: audioEnabled }
+        preferences: { autoRestEnabled: autoRestEnabled, audioEnabled: audioEnabled, weightUnit: weightUnit }
       };
       const writable = await autoBackupHandle.createWritable();
       await writable.write(JSON.stringify(payload, null, 2));
@@ -866,6 +947,11 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
               audioEnabled = prefsToApply.audioEnabled;
               saveAudioEnabled(audioEnabled);
               if (typeof updateAudioBtn === 'function') updateAudioBtn();
+            }
+            if (prefsToApply.weightUnit === 'kg' || prefsToApply.weightUnit === 'lb') {
+              weightUnit = prefsToApply.weightUnit;
+              saveWeightUnit(weightUnit);
+              applyWeightUnit();
             }
           }
 
@@ -1799,7 +1885,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
         let rowsHtml = '';
         for (let i = 1; i <= setCount; i++) {
           rowsHtml += '<div class="set-log-row">Set ' + i + ':'
-            + ' <input type="number" step="any" inputmode="decimal" class="log-input log-weight" placeholder="kg" data-set="' + i + '">'
+            + ' <input type="number" step="any" inputmode="decimal" class="log-input log-weight" placeholder="' + weightUnit + '" data-set="' + i + '">'
             + ' <input type="number" inputmode="numeric" class="log-input log-reps" placeholder="reps" data-set="' + i + '">'
             + ' <input type="number" inputmode="numeric" class="log-input log-rir" placeholder="RIR" data-set="' + i + '">'
             + ' <span class="delta-badge"></span></div>';
@@ -1808,7 +1894,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
           + '<button type="button" class="warmup-toggle-btn" onclick="toggleWarmupCalc(\'' + exKey + '\')">Warmup %</button>'
           + '<div class="warmup-calc" id="warmupCalc-' + exKey + '"></div>'
           + '<div class="last-log last-note" id="lastNote-' + exKey + '"></div>'
-          + '<textarea class="exercise-notes" placeholder="Notes — e.g. elbows flared on set 2, drop 2.5kg next time"></textarea>';
+          + '<textarea class="exercise-notes" placeholder="' + notesPlaceholder() + '"></textarea>';
         bodyInner.appendChild(panel);
 
         panel.querySelectorAll('.log-input').forEach(inp => {
@@ -1885,7 +1971,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     if (!weightEl) return;
     const row = weightEl.closest('.set-log-row');
     if (!row) return;
-    const w = row.querySelector('.log-weight').value;
+    const w = weightInputToKg(row.querySelector('.log-weight'));
     const r = row.querySelector('.log-reps').value;
     const rir = row.querySelector('.log-rir').value;
     if (!w && !r && !rir) return; // nothing entered/suggested for this set — nothing to commit
@@ -1918,7 +2004,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   function saveSetLog(exKey, card) {
     const rows = {};
     card.querySelectorAll('.set-log-row').forEach(row => {
-      const w = row.querySelector('.log-weight').value;
+      const w = weightInputToKg(row.querySelector('.log-weight'));
       const r = row.querySelector('.log-reps').value;
       const rir = row.querySelector('.log-rir').value;
       const setIdx = row.querySelector('.log-weight').getAttribute('data-set');
@@ -1960,7 +2046,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       const est = estimate1RM(s.w, s.r);
       if (est && (!best || est > best)) best = est;
     });
-    el.textContent = best ? 'Est. 1RM: ~' + (Math.round(best * 10) / 10) + 'kg' : '';
+    el.textContent = best ? 'Est. 1RM: ~' + formatEstimate(best) : '';
   }
 
   function renderLoadSparkline(exKey) {
@@ -1984,14 +2070,14 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       const bar = document.createElement('div');
       bar.className = 'ls-bar';
       bar.style.height = p.est ? Math.max(2, (p.est / max) * 22) + 'px' : '2px';
-      bar.title = p.d + (p.est ? ': ~' + Math.round(p.est * 10) / 10 + 'kg e1RM' : ': no weight logged');
+      bar.title = p.d + (p.est ? ': ~' + formatEstimate(p.est) + ' e1RM' : ': no weight logged');
       el.appendChild(bar);
     });
   }
 
   function formatLogRow(row) {
     const parts = [];
-    if (row.w) parts.push(row.w + 'kg');
+    if (row.w) parts.push(weightToInput(row.w) + weightUnit);
     if (row.r) parts.push('× ' + row.r);
     if (row.rir !== '' && row.rir != null) parts.push('@ ' + row.rir + ' RIR');
     return parts.join(' ');
@@ -2055,10 +2141,10 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   function renderDeltaBadge(row, exKey, setIdx) {
     let badge = row.querySelector('.delta-badge');
     if (!badge) return;
-    const w = parseFloat(row.querySelector('.log-weight').value);
+    const w = toUnit(weightInputToKg(row.querySelector('.log-weight')));
     const r = parseFloat(row.querySelector('.log-reps').value);
     const prior = findPriorSetEntry(exKey, setIdx, todayKey());
-    const priorW = prior ? parseFloat(prior.w) : NaN;
+    const priorW = prior ? toUnit(prior.w) : NaN;
     const priorR = prior ? parseFloat(prior.r) : NaN;
     badge.className = 'delta-badge';
     if (isNaN(w) || isNaN(r) || isNaN(priorW) || isNaN(priorR)) {
@@ -2066,8 +2152,8 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       return;
     }
     if (w > priorW) {
-      const diff = Math.round((w - priorW) * 10) / 10;
-      badge.textContent = '▲ +' + diff + 'kg ready';
+      const diff = Math.round((w - priorW) * 100) / 100;
+      badge.textContent = '▲ +' + diff + weightUnit + ' ready';
       badge.classList.add('delta-up');
     } else if (w === priorW && r > priorR) {
       const diff = r - priorR;
@@ -2096,7 +2182,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       const wEl = row.querySelector('.log-weight'), rEl = row.querySelector('.log-reps'), rirEl = row.querySelector('.log-rir');
       const data = dayRows && dayRows[setIdx];
       if (data) {
-        wEl.value = data.w || ''; rEl.value = data.r || ''; rirEl.value = data.rir || '';
+        wEl.value = weightToInput(data.w); wEl.setAttribute('data-kg', data.w || ''); rEl.value = data.r || ''; rirEl.value = data.rir || '';
         wEl.classList.remove('log-input-suggested'); rEl.classList.remove('log-input-suggested');
         // Re-render the persistent PR marker on load too, not just live at
         // the moment checkForPRs first detects it — otherwise switching
@@ -2111,7 +2197,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
         // repeat of last time's. Dashed/muted styling marks it as a
         // suggestion until the user actually types into it.
         const prior = findPriorSetEntry(exKey, setIdx, tKey);
-        wEl.value = prior && prior.w ? prior.w : '';
+        wEl.value = prior && prior.w ? weightToInput(prior.w) : ''; wEl.setAttribute('data-kg', prior && prior.w ? prior.w : '');
         rEl.value = prior && prior.r ? prior.r : '';
         rirEl.value = '';
         wEl.classList.toggle('log-input-suggested', !!(prior && prior.w));
@@ -2454,6 +2540,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   initSourcesAccordion();
   initKioskButtons();
   initAutoRestToggle();
+  applyWeightUnit();
   updateAudioBtn();
   applyHighContrast();
   renderMesocycleBanner();
@@ -2535,7 +2622,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       const dayRows = history[dateKey];
       Object.keys(dayRows || {}).forEach(setIdx => {
         const entry = dayRows[setIdx];
-        const w = parseFloat(entry && entry.w);
+        const w = toUnit(entry && entry.w);
         const r = parseFloat(entry && entry.r);
         if (!isNaN(w) && !isNaN(r)) sets.push({ w, r });
       });
@@ -2607,7 +2694,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       const entry = todayRows[setIdx];
       if (!entry) { clearPRBadge(row); setPersistentPRMarker(row, false); return; }
 
-      const w = parseFloat(entry.w);
+      const w = toUnit(entry.w);
       const r = parseFloat(entry.r);
       if (isNaN(w) || isNaN(r)) { clearPRBadge(row); setPersistentPRMarker(row, false); return; }
 
@@ -2795,6 +2882,7 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
   saveAudioEnabled = thenNotify(saveAudioEnabled);
   saveHighContrast = thenNotify(saveHighContrast);
   saveMesocycleWeek = thenNotify(saveMesocycleWeek);
+  saveWeightUnit = thenNotify(saveWeightUnit);
 
   window.__legacyBridge = {
     readState: function () {
@@ -2807,7 +2895,8 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
           autoRest: autoRestEnabled,
           audio: audioEnabled,
           highContrast: highContrastEnabled,
-          mesocycleWeek: mesocycleWeek
+          mesocycleWeek: mesocycleWeek,
+          unit: weightUnit
         }
       }));
     },
@@ -2839,6 +2928,11 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
           mesocycleWeek = p.mesocycleWeek;
           saveMesocycleWeek(mesocycleWeek);
           renderMesocycleBanner();
+
+          // Weights are re-shown in this unit by initExerciseEnhancements() below.
+          weightUnit = p.unit === 'lb' ? 'lb' : 'kg';
+          saveWeightUnit(weightUnit);
+          applyWeightUnit();
         }
 
         // Same refresh sequence importProgress() uses after a restore.
