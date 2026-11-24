@@ -3,6 +3,19 @@ import { openApp } from './helpers';
 
 /** The reading sections around the workout: what a visitor can do with them. */
 test.describe('reading sections', () => {
+  test('the page loads and scrolls through without console errors', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (m) => {
+      // Vercel's visitor-stats script only exists on Vercel, not on this test server.
+      if (m.type() === 'error' && !m.text().includes('/_vercel/') && !m.location().url.includes('/_vercel/')) errors.push(m.text());
+    });
+    page.on('pageerror', (e) => errors.push(e.message));
+    await openApp(page);
+    for (const id of ['#protocol', '#volume', '#anatomy', '#sources']) await page.locator(id).scrollIntoViewIfNeeded();
+    await page.waitForTimeout(500);
+    expect(errors).toEqual([]);
+  });
+
   test('Anatomy tabs show one day at a time, Legs first', async ({ page }) => {
     await openApp(page);
     const tabs = page.locator('#anatomyTabs');

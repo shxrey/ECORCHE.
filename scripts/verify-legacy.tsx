@@ -23,6 +23,7 @@ import { Gauge } from '../src/components/sections/Gauge';
 import { Protocol } from '../src/components/sections/Protocol';
 import { SiteFooter } from '../src/components/sections/SiteFooter';
 import { Standards } from '../src/components/sections/Standards';
+import { Volume } from '../src/components/sections/Volume';
 import { Workout } from '../src/components/workout/Workout';
 import { legacyFragments, PORTED } from './legacy-fragments.mjs';
 
@@ -31,6 +32,7 @@ const SECTIONS: Record<string, ReactElement> = {
   protocol: <Protocol />,
   standards: <Standards />,
   gauge: <Gauge />,
+  volume: <Volume />,
   footer: <SiteFooter />,
 };
 

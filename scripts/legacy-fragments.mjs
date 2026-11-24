@@ -12,7 +12,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
  * Sections now rendered by React components (src/components/sections/). Their
  * HTML is left out of src/legacy/fragments.ts but still checked by verify:legacy.
  */
-export const PORTED = ['protocol', 'standards', 'gauge', 'footer'];
+export const PORTED = ['protocol', 'standards', 'gauge', 'volume', 'footer'];
 
 export function readReference() {
   return readFileSync(resolve(root, 'reference/protocol.html'), 'utf8').replace(/\r\n/g, '\n');

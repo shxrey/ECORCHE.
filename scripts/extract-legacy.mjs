@@ -388,6 +388,30 @@ for (const [from, to] of patches) {
   if (hits !== 1) throw new Error(`patch target found ${hits} times (expected 1): ` + from);
   js = js.replace(from, to);
 }
+
+// Code for sections now rendered by React (src/components/sections/): each cut
+// removes everything from `start` up to, not including, `end` (both must occur
+// exactly once) and puts `replacement` in its place.
+const cuts = [
+  // Volume: the bars and tap-to-highlight live in VolumeGrid.tsx now. The
+  // "N logged so far" lines stay here until the training core moves (Phase 3).
+  ['  // ===== VOLUME AUDIT: SCROLL-ANIMATED BARS + CLICK-TO-HIGHLIGHT =====\n',
+   '    const volumeCompletionObserver = new IntersectionObserver(',
+   '  // ===== VOLUME AUDIT: "N LOGGED SO FAR" LINES =====\n' +
+   '  // The bars and tap-to-highlight are React now (src/components/sections/VolumeGrid.tsx).\n' +
+   '  function initVolumeInteractions() {\n' +
+   '    // Re-counts every time the section scrolls back into view, so the lines\n' +
+   '    // stay current without a full multi-card scan on every set tap.\n'],
+  ['  // Heuristic match: takes the volume card\'s muscle name', '  // ===== SOURCES ACCORDION (collapse long study lists) =====', ''],
+];
+for (const [start, end, replacement] of cuts) {
+  const s = js.indexOf(start);
+  const e = js.indexOf(end);
+  if (s < 0 || js.indexOf(start, s + 1) >= 0) throw new Error('cut start must occur exactly once: ' + start);
+  if (e < 0 || js.indexOf(end, e + 1) >= 0) throw new Error('cut end must occur exactly once: ' + end);
+  if (e <= s) throw new Error('cut end comes before its start: ' + start);
+  js = js.slice(0, s) + replacement + js.slice(e);
+}
 // No service worker ships yet (PWA comes back in a later step).
 const swStart = js.indexOf("  if ('serviceWorker' in navigator) {");
 if (swStart < 0) throw new Error('service worker block not found');

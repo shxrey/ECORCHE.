@@ -7,6 +7,7 @@ import { Gauge } from '@/components/sections/Gauge';
 import { Protocol } from '@/components/sections/Protocol';
 import { SiteFooter } from '@/components/sections/SiteFooter';
 import { Standards } from '@/components/sections/Standards';
+import { Volume } from '@/components/sections/Volume';
 import { CloudSync } from '@/components/sync/CloudSync';
 import { Workout } from '@/components/workout/Workout';
 
@@ -26,7 +27,7 @@ export default function Home() {
       <Protocol />
       <Standards />
       <Gauge />
-      <LegacyFragment name="volume" />
+      <Volume />
       <Workout />
       <LegacyFragment name="anatomy" />
       <LegacyFragment name="sources" />

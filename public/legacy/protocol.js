@@ -2255,33 +2255,11 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
     renderAllDeltaBadges(card, exKey);
   }
 
-  // ===== VOLUME AUDIT: SCROLL-ANIMATED BARS + CLICK-TO-HIGHLIGHT =====
+  // ===== VOLUME AUDIT: "N LOGGED SO FAR" LINES =====
+  // The bars and tap-to-highlight are React now (src/components/sections/VolumeGrid.tsx).
   function initVolumeInteractions() {
-    document.querySelectorAll('.volume-fill').forEach(fill => {
-      const match = (fill.getAttribute('style') || '').match(/scaleX\(([\d.]+)\)/);
-      fill.setAttribute('data-target-scale', match ? match[1] : '0');
-      fill.style.transform = 'scaleX(0)';
-    });
-    const volObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const fill = entry.target.querySelector('.volume-fill');
-          if (fill) fill.style.transform = 'scaleX(' + fill.getAttribute('data-target-scale') + ')';
-          volObserver.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.2 });
-    document.querySelectorAll('.volume-card').forEach(card => {
-      volObserver.observe(card);
-      card.addEventListener('click', () => highlightMuscleExercises(card));
-    });
-
-    // Deliberately NOT unobserved (unlike volObserver above) — re-fires
-    // every time the section scrolls back into view, so the completed-set
-    // counts stay current without costing anything on every single set
-    // tap elsewhere in the app (this does a full multi-card scan, which is
-    // exactly the kind of cost updateMasterTracker() was reworked earlier
-    // to avoid paying on every tap).
+    // Re-counts every time the section scrolls back into view, so the lines
+    // stay current without a full multi-card scan on every set tap.
     const volumeCompletionObserver = new IntersectionObserver((entries) => {
       if (entries.some(e => e.isIntersecting)) renderAllVolumeCompletions();
     }, { threshold: 0.1 });
@@ -2382,33 +2360,6 @@ document.querySelectorAll('[data-legacy-onclick],[data-legacy-onkeydown]').forEa
       badge.textContent = completed + ' logged so far'
         + (lastTrained ? ' · last trained ' + formatRecency(lastTrained) : '');
     });
-  }
-
-  // Heuristic match: takes the volume card's muscle name and pulses any
-  // exercise card in the CURRENTLY VISIBLE day whose muscle-tag text overlaps
-  // with it, then scrolls to the first match. Days are tabbed (only one
-  // visible at a time) so cross-day highlighting isn't meaningful here.
-  function highlightMuscleExercises(volumeCard) {
-    document.querySelectorAll('.volume-card.pulse-highlight').forEach(c => c.classList.remove('pulse-highlight'));
-    volumeCard.classList.add('pulse-highlight');
-    const h4 = volumeCard.querySelector('h4');
-    const muscleName = h4 ? h4.childNodes[0].textContent.trim().toLowerCase() : '';
-    if (!muscleName) return;
-    const activeDay = document.querySelector('.day-content.active');
-    if (!activeDay) return;
-    const matches = Array.from(activeDay.querySelectorAll('.exercise-card')).filter(card => {
-      return Array.from(card.querySelectorAll('.muscle-tag')).some(tag =>
-        tag.textContent.toLowerCase().includes(muscleName.split(' ')[0]) ||
-        muscleName.includes(tag.textContent.toLowerCase().split(' ')[0])
-      );
-    });
-    matches.forEach(card => {
-      card.style.animation = 'none';
-      void card.offsetWidth;
-      card.style.boxShadow = 'var(--shadow-3), 0 0 40px -6px var(--accent-glow)';
-      setTimeout(() => { card.style.boxShadow = ''; }, 1400);
-    });
-    if (matches[0]) matches[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   // ===== SOURCES ACCORDION (collapse long study lists) =====
