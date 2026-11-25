@@ -29,7 +29,7 @@ export default defineConfig({
       name: 'preview',
       use: { ...devices['Desktop Chrome'] },
       metadata: { appPath: '/preview' },
-      testMatch: ['preview.spec.ts', 'tracking.spec.ts', 'logging.spec.ts', 'shell.spec.ts', 'sections.spec.ts', 'timers.spec.ts'],
+      testMatch: ['preview.spec.ts', 'tracking.spec.ts', 'logging.spec.ts', 'shell.spec.ts', 'sections.spec.ts', 'timers.spec.ts', 'data.spec.ts'],
     },
   ],
   webServer: {

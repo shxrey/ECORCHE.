@@ -9,6 +9,7 @@ import { useHydrated } from '@/lib/useHydrated';
 import { useView, viewStore } from '@/lib/view';
 import type { DayLetter, Group } from '@/content/types';
 import { fireConfetti } from './confetti';
+import { exportBackup, exportCsv, importBackupFile, openHistory, stopAutoBackup, toggleAutoBackup, useAutoBackupOn } from './dataTools';
 
 /** The six day cards, in the tracker's order (the weekly order). */
 const DAY_CARDS: { id: TrainingDayId; group: Group; letter: DayLetter; session: string; name: string; color: string }[] = [
@@ -27,8 +28,7 @@ const INFO_TEXT = 'Tracks every working set across all 6 sessions — Leg A/B, P
 /**
  * "Weekly Progress Tracker": the training-week banner, kg/lb and Auto-Rest
  * switches, the week ring, a card per day (tap to jump to it), and the data
- * buttons. Rebuilt training core (/preview); history, export, import and
- * auto-backup arrive in Phase 3d, so those buttons do nothing yet.
+ * buttons (history, backups, CSV: dataTools.ts). Rebuilt training core (/preview).
  *
  * The server HTML is the original page's; the live numbers fill in once the
  * page is running.
@@ -42,8 +42,13 @@ export function Tracker() {
   const autoRest = useTraining((s) => s.prefs.autoRest);
   const progress = useMemo(() => weekProgress(doneMap), [doneMap]);
   const banner = trainingWeekBanner(week);
+  const autoBackupOn = useAutoBackupOn();
   const [celebrating, setCelebrating] = useState(false);
   const celebrated = useRef(false);
+  const importInput = useRef<HTMLInputElement>(null);
+
+  // Auto-backup is for this visit: leaving the page turns it off.
+  useEffect(() => stopAutoBackup, []);
 
   // A completed week: confetti, and the heading says so for 6 seconds.
   useEffect(() => {
@@ -172,14 +177,34 @@ export function Tracker() {
         </div>
 
         <div className="tracker-reset-all">
-          <button className="reset-btn">View History</button>
-          <button className="reset-btn">Export Backup</button>
-          <button className="reset-btn">Export CSV</button>
-          <button className="reset-btn" id="autoBackupBtn">
-            Enable Auto-Backup
+          <button className="reset-btn" onClick={openHistory}>
+            View History
           </button>
-          <button className="reset-btn">Import Backup</button>
-          <input type="file" id="importFileInput" aria-label="Backup file to import" accept="application/json" style={{ display: 'none' }} />
+          <button className="reset-btn" onClick={exportBackup}>
+            Export Backup
+          </button>
+          <button className="reset-btn" onClick={exportCsv}>
+            Export CSV
+          </button>
+          <button className={autoBackupOn ? 'reset-btn active-toggle' : 'reset-btn'} id="autoBackupBtn" onClick={toggleAutoBackup}>
+            {autoBackupOn ? 'Auto-Backup: On' : 'Enable Auto-Backup'}
+          </button>
+          <button className="reset-btn" onClick={() => importInput.current?.click()}>
+            Import Backup
+          </button>
+          <input
+            ref={importInput}
+            type="file"
+            id="importFileInput"
+            aria-label="Backup file to import"
+            accept="application/json"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = ''; // so choosing the same file again still counts
+              void importBackupFile(file);
+            }}
+          />
           <button className="reset-btn" onClick={resetWeek}>
             Reset Entire Week
           </button>

@@ -204,9 +204,24 @@ you're happy, `/` switches over.
   - New tests on both pages: ±15, dismiss and the mini-bar countdown; Workout Mode hiding and
     restoring the page; Escape closing a dialog before leaving Workout Mode; the "Next:" line
     and a finished card folding away. The pixel check's session bar now matches too.
-- [ ] **3d. Data tools:** history, export and import (same file format), CSV, auto-backup,
+- [x] **3d. Data tools:** history, export and import (same file format), CSV, auto-backup,
       confirm dialogs and toasts.
   - Fix: on Sundays, View History counts that day's sets in this week.
+  - Done 25 Nov. `src/components/training/dataTools.ts` wires the tracker's buttons to the
+    file formats from Phase 0 (`backup.ts`, `csv.ts`): Export Backup and Export CSV download
+    the same files as before; Import Backup checks the whole file, says what's in it and
+    replaces the progress only on Confirm (then saves at once); Auto-Backup rewrites the
+    chosen file 5 s after the last change, for this visit. Session History is a live
+    dialog in `Overlays` (this week and last week, Monday to Sunday, and 14 days of bars);
+    ✕, Escape and the backdrop close it.
+  - Small differences: "Auto-backup enabled" only shows if the first write worked (the old
+    page said so even when it had just failed and switched off), and leaving `/preview`
+    turns auto-backup off.
+  - `e2e/data.spec.ts` now runs on `/preview` too, with new tests on both pages: the 14 bars
+    and closing the dialog, cancelling an import, a file over 5 MB, auto-backup's writes
+    (a stand-in save dialog) and a browser without it. The Sunday test is parked on the
+    live page and passes on `/preview`. Pixel check: Session History with two weeks of
+    sets is identical to the live page's, at both widths.
 - [ ] Switch `/` to the new core.
 
 ## Phase 4: Clean-up (1 session)

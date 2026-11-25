@@ -59,6 +59,14 @@ const CASES: Case[] = [
     click: ['.exercise-card[data-exercise="legs-a1"] .exercise-header .exercise-info h3'],
     widths: [1280],
   },
+  // Phase 3d: Session History with two weeks of sets.
+  {
+    sel: '#historyModalOverlay .app-modal',
+    name: 'history',
+    floating: true,
+    seed: { sessionsMap: { [dateKey(0)]: 5, [dateKey(-1)]: 12, [dateKey(-4)]: 21, [dateKey(-9)]: 7, [dateKey(-13)]: 3 } },
+    click: ['.tracker-reset-all .reset-btn >> nth=0'],
+  },
 ];
 
 /** Hides whatever floats over the page, except `keep` (and what's inside it). */

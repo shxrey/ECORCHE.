@@ -343,9 +343,10 @@ export class TrainingStore {
 
   // ---------- backups and sync ----------
 
-  /** Applies a checked backup (see backup.readBackup) after the lifter confirms. */
+  /** Applies a checked backup (see backup.readBackup) after the lifter confirms, and saves it at once. */
   importBackup(contents: BackupContents): void {
     this.commit(applyBackup(this.state, contents));
+    this.flush();
   }
 
   /** A copy of everything, for cloud sync and exports. */

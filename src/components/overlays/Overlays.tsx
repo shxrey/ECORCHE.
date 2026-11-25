@@ -1,7 +1,11 @@
 'use client';
 
 import { useEffect, useState, type MouseEvent } from 'react';
+import { closeHistory, useHistoryOpen } from '@/components/training/dataTools';
 import { adjustRest, finishWorkoutMode, formatClock, hideRest, inWorkoutMode, stopTempo, TEMPO_PHASES, useRest, useTempo } from '@/components/training/workout';
+import { useToday, useTraining } from '@/lib/training/client';
+import { fromDateKey } from '@/lib/training/dates';
+import { recentDays, weeklySetCounts } from '@/lib/training/progress';
 import { answerConfirm, dismissToast, useAnnouncement, useConfirmation, useToasts } from './feedback';
 
 const VISUALLY_HIDDEN = {
@@ -16,6 +20,11 @@ const VISUALLY_HIDDEN = {
   border: '0',
 } as const;
 
+/** Closes a dialog when its dimmed backdrop (not the box) is clicked. */
+const onBackdrop = (close: () => void) => (e: MouseEvent) => {
+  if (e.target === e.currentTarget) close();
+};
+
 const CloseIcon = ({ size }: { size: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
     <path d="M6 6l12 12M18 6L6 18" />
@@ -27,7 +36,7 @@ const CloseIcon = ({ size }: { size: number }) => (
  * tempo pacer, toasts, the screen-reader announcer, the "?" quick reference,
  * session history and the "Are you sure?" dialog.
  *
- * Rebuilt training core (/preview). Session history (3d) is still its markup only.
+ * Rebuilt training core (/preview).
  */
 export function Overlays() {
   const toasts = useToasts();
@@ -46,6 +55,7 @@ export function Overlays() {
       if (document.getElementById('mobileDrawer')?.classList.contains('open')) return; // the menu closes itself
       if (document.querySelector('.app-modal-overlay.open')) {
         setHelpOpen(false);
+        closeHistory();
         answerConfirm(false);
         return;
       }
@@ -55,10 +65,6 @@ export function Overlays() {
     return () => document.removeEventListener('keydown', onKey);
   }, []);
 
-  /** Closes a dialog when its dimmed backdrop (not the box) is clicked. */
-  const onBackdrop = (close: () => void) => (e: MouseEvent) => {
-    if (e.target === e.currentTarget) close();
-  };
 
   return (
     <>
@@ -161,30 +167,7 @@ export function Overlays() {
         </div>
       </div>
 
-      <div className="app-modal-overlay" id="historyModalOverlay" role="dialog" aria-modal="true" aria-label="Session history">
-        <div className="app-modal">
-          <button className="modal-close" aria-label="Close">
-            <CloseIcon size={16} />
-          </button>
-          <h3>Session History</h3>
-          <div className="history-week-compare">
-            <div className="history-week-stat">
-              <div className="num" id="histThisWeek">
-                0
-              </div>
-              <div className="lbl">Sets This Week</div>
-            </div>
-            <div className="history-week-stat">
-              <div className="num" id="histLastWeek">
-                0
-              </div>
-              <div className="lbl">Sets Last Week</div>
-            </div>
-          </div>
-          <div className="history-sparkline" id="historySparkline" />
-          <p style={{ fontSize: '12px', color: 'var(--ink-dim)' }}>Last 14 days · sets completed per day, stored locally in this browser.</p>
-        </div>
-      </div>
+      <HistoryDialog />
 
       <div
         className={confirmation.open ? 'app-modal-overlay open' : 'app-modal-overlay'}
@@ -211,5 +194,63 @@ export function Overlays() {
         </div>
       </div>
     </>
+  );
+}
+
+/**
+ * "Session History": sets ticked this week and last week (weeks run Monday to
+ * Sunday), and a bar per day for the last 14 days. The server HTML is the
+ * original's (zeros, no bars); the numbers fill in once the page is running.
+ */
+function HistoryDialog() {
+  const open = useHistoryOpen();
+  const sessions = useTraining((s) => s.sessionsMap);
+  const today = useToday();
+  const now = today ? fromDateKey(today) : null;
+  const days = now ? recentDays(sessions, now) : [];
+  const weeks = now ? weeklySetCounts(sessions, now) : { thisWeek: 0, lastWeek: 0 };
+  const max = Math.max(1, ...days.map((d) => d.sets));
+
+  return (
+    <div
+      className={open ? 'app-modal-overlay open' : 'app-modal-overlay'}
+      id="historyModalOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Session history"
+      onClick={onBackdrop(closeHistory)}
+    >
+      <div className="app-modal">
+        <button className="modal-close" onClick={closeHistory} aria-label="Close">
+          <CloseIcon size={16} />
+        </button>
+        <h3>Session History</h3>
+        <div className="history-week-compare">
+          <div className="history-week-stat">
+            <div className="num" id="histThisWeek">
+              {weeks.thisWeek}
+            </div>
+            <div className="lbl">Sets This Week</div>
+          </div>
+          <div className="history-week-stat">
+            <div className="num" id="histLastWeek">
+              {weeks.lastWeek}
+            </div>
+            <div className="lbl">Sets Last Week</div>
+          </div>
+        </div>
+        <div className="history-sparkline" id="historySparkline">
+          {days.map((d) => (
+            <div
+              key={d.date}
+              className={d.sets === 0 ? 'hs-bar empty' : 'hs-bar'}
+              style={{ height: `${Math.max(3, (d.sets / max) * 74)}px` }}
+              title={`${d.date}: ${d.sets} sets`}
+            />
+          ))}
+        </div>
+        <p style={{ fontSize: '12px', color: 'var(--ink-dim)' }}>Last 14 days · sets completed per day, stored locally in this browser.</p>
+      </div>
+    </div>
   );
 }

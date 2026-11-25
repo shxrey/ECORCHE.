@@ -32,7 +32,7 @@ export const metadata: Metadata = {
  * the workout and the session bar run on the training store here, and the old
  * script doesn't load at all, so the two never write the data at once.
  *
- * Still to come: history, export and import (3d).
+ * Everything the old script did now runs here; next is "/" switching over.
  */
 export default function Preview() {
   return (
