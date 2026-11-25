@@ -169,12 +169,22 @@ you're happy, `/` switches over.
   - Waiting on later steps, so they do nothing on `/preview` yet: the log boxes (3b), the rest
     timer, tempo pacer, Workout Mode and the session timer (3c), and View History, Export,
     Import and Auto-Backup (3d).
-- [ ] **3b. Logging:** weight, reps and RIR boxes; suggestions; dated notes; "Last session";
+- [x] **3b. Logging:** weight, reps and RIR boxes; suggestions; dated notes; "Last session";
       e1RM; trend bars; ▲/▼ badges; PRs and confetti; warm-up; kg/lb; screen-reader names.
   - Fix: only the set you actually confirm is saved, not the suggested numbers in the
     card's other rows.
   - Fix: on phones the ▲/▼ badge moves under the boxes instead of being cut off.
   - Fix: a PR stays a PR when its set is edited again, and its tag shows after a reload.
+  - Done 25 Nov (6dc5cc4). `useExerciseLog` (per card: boxes start from today's saved set or
+    last time's as a dashed suggestion; typing stays in the row until it's confirmed by
+    leaving a box, Enter, or ticking the set; notes save 400 ms after typing stops) and
+    `LogPanel` (same markup as the old page's injected panel). The old page never fired
+    confetti for a PR, only for a finished week, so neither does this.
+  - All four fixes are tests that are parked on the live page and pass on `/preview`. The
+    phone one at 360px wide: the old page's badges ran 21-34px past the card there (6-19px
+    at 375px, only "hold" by 4px at 390px). `e2e/cards.ts` (shared with `parity.spec.ts`)
+    checks every card's boxes, lines and badges on `/preview` against the modules on random
+    histories. Pixel check: an open card with history is identical to the live page's.
 - [ ] **3c. Timers and Workout Mode:** rest timer, auto-rest and voice cues; session timer
       (synced); tempo pacer; the mini-bar; Workout Mode, swiping days, keeping the screen awake;
       high contrast.

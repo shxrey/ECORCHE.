@@ -4,7 +4,18 @@
 // machines, so baselines are taken on this laptop from the version before the
 // change, and never committed. Steps: docs/react-rebuild-plan.md, "Pixel check".
 import { expect, test, type Page } from '@playwright/test';
-import { openApp } from '../e2e/helpers';
+import { dateKey, openApp, seed, type Seed } from '../e2e/helpers';
+
+/** Legs A's first exercise with two earlier sessions and a note: suggestions, last session, e1RM, trend, badges. */
+const LOGGED: Seed = {
+  logMap: {
+    'legs-a1': {
+      [dateKey(-8)]: { 1: { w: '95', r: '8', rir: '1' }, 2: { w: '97.5', r: '7', rir: '1' } },
+      [dateKey(-1)]: { 1: { w: '100', r: '8', rir: '' }, 2: { w: '102.5', r: '6', rir: '2' }, 3: { w: '100', r: '9', rir: '' } },
+    },
+  },
+  notesMap: { 'legs-a1': { [dateKey(-1)]: 'elbows in' } },
+};
 
 interface Case {
   name: string;
@@ -20,6 +31,8 @@ interface Case {
   scrollTo?: string;
   /** Only at these widths (default both). */
   widths?: number[];
+  /** Saved progress to load first. */
+  seed?: Seed;
 }
 
 const SECTIONS = ['#protocol', '#standards', '#gauge', '#volume', '#anatomy', '#sources', 'footer.site-footer'];
@@ -37,6 +50,15 @@ const CASES: Case[] = [
   { sel: '.top-nav', name: 'nav', floating: true },
   { sel: '#mobileDrawer', name: 'menu', floating: true, click: ['#hamburgerBtn'], widths: [390] },
   { sel: '#sessionMinibar', name: 'minibar', floating: true, scrollTo: '#protocol' },
+  // Phase 3b: an open exercise card with its session log. Desktop only: on phones
+  // the rebuilt core lets a long badge wrap under the boxes (a deliberate fix).
+  {
+    sel: '.exercise-card[data-exercise="legs-a1"]',
+    name: 'card-open',
+    seed: LOGGED,
+    click: ['.exercise-card[data-exercise="legs-a1"] .exercise-header .exercise-info h3'],
+    widths: [1280],
+  },
 ];
 
 /** Hides whatever floats over the page, except `keep` (and what's inside it). */
@@ -60,6 +82,7 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 
         'The session bar on /preview has no "00:00" workout timer until Phase 3c',
       );
       await page.setViewportSize(viewport);
+      if (c.seed) await seed(page, c.seed);
       await openApp(page, c.hash ?? '#legsA');
       // The hero's particles drift at random: not part of any comparison.
       await page.addStyleTag({ content: '.hero-particle { visibility: hidden !important; }' });
