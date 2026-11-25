@@ -1,18 +1,10 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 type LogEntry = { w?: string; r?: string; rir?: string; pr?: boolean };
 
-/**
- * The page under test: "/", unless a test project sets another. (Until the
- * switch-over on 25 Nov 2026 one did: "/preview", the rebuilt training core.)
- */
-export function appPath(): string {
-  return (test.info().project.metadata as { appPath?: string } | undefined)?.appPath ?? '/';
-}
-
-/** Either version has booted: the old script's bridge, or the training store. */
-async function appReady(page: Page) {
-  await page.waitForFunction(() => '__legacyBridge' in window || '__training' in window);
+/** The page has booted: its training store is up (TrainingRuntime). */
+export async function appReady(page: Page) {
+  await page.waitForFunction(() => '__training' in window);
 }
 
 export interface Seed {
@@ -47,7 +39,7 @@ export async function seed(page: Page, s: Seed) {
 
 /** Opens the protocol page and waits for it to finish booting. */
 export async function openApp(page: Page, hash = '#legsA') {
-  await page.goto(appPath() + hash);
+  await page.goto('/' + hash);
   await appReady(page);
 }
 
@@ -78,9 +70,7 @@ export async function enter(page: Page, box: ReturnType<typeof weightBox>, value
 /** What the app has saved, after skipping its half-second save delay. */
 export async function saved(page: Page) {
   return page.evaluate(() => {
-    const w = window as unknown as { flushUnifiedState?: () => void; __training?: { flush(): void } };
-    w.flushUnifiedState?.();
-    w.__training?.flush();
+    (window as unknown as { __training: { flush(): void } }).__training.flush();
     return JSON.parse(localStorage.getItem('hb_state_v1') || '{}');
   });
 }

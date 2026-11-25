@@ -35,7 +35,7 @@ export const reveal = {
   },
   /**
    * Fades an element in again: used when a training day is shown, so its
-   * cards replay their entrance (the old script calls it through window.__reveal).
+   * cards replay their entrance.
    */
   replay(el: Element): void {
     el.classList.remove('visible');

@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { DocumentLink } from '@/components/legacy/DocumentLink';
+import { DocumentLink } from '@/components/DocumentLink';
 import '@/styles/auth.css'; // shared top bar (.auth-top, .auth-back)
 import '@/styles/legal.css';
 import { FEEDBACK_HREF } from '@/lib/feedback';

@@ -1,30 +1,21 @@
 /**
- * Reading every exercise card's session log off a page, and what the
- * training modules say it should show (e2e/saved-data.spec.ts). `oldPage`
- * is from before the switch-over (25 Nov 2026), when this also checked the
- * old script's page; it goes in Phase 4.
+ * Reading every exercise card's session log off the page, and what the
+ * training modules say it should show (e2e/saved-data.spec.ts).
  */
 import type { Page } from '@playwright/test';
 import { exercises } from '../src/content/program';
 import { lastEarlierNote, lastLoggedText, lastSessionText, lastTimeThisSet, setBoxes } from '../src/lib/training/history';
-import { isEasierThanPrescribed, restSeconds, targetRirMax, warmupSteps } from '../src/lib/training/prescription';
+import { isEasierThanPrescribed, targetRirMax, warmupSteps } from '../src/lib/training/prescription';
 import { compareToLastTime, currentEstimate, loadTrend } from '../src/lib/training/strength';
 import type { TrainingState } from '../src/lib/training/types';
 import { formatEstimate, weightBoxToKg } from '../src/lib/training/units';
 import { TODAY } from './random-data';
 
-type Fn = (...args: unknown[]) => unknown;
-
-/**
- * Everything a page shows for every exercise. Each card's warm-up steps are
- * opened first. `oldPage` also reads two of the old script's rules that
- * aren't drawn anywhere (rest length, RIR target).
- */
-export function readCards(page: Page, { oldPage }: { oldPage: boolean }) {
-  return page.evaluate(async (old) => {
+/** Everything the page shows for every exercise. Each card's warm-up steps are opened first. */
+export function readCards(page: Page) {
+  return page.evaluate(async () => {
     document.querySelectorAll<HTMLElement>('.warmup-toggle-btn').forEach((b) => b.click());
     await new Promise((r) => setTimeout(r, 100));
-    const w = window as unknown as Record<string, Fn>;
     const text = (id: string) => document.getElementById(id)?.textContent ?? null;
     const out: Record<string, unknown> = {};
     document.querySelectorAll<HTMLElement>('.exercise-card').forEach((card) => {
@@ -37,7 +28,6 @@ export function readCards(page: Page, { oldPage }: { oldPage: boolean }) {
         trend: [...document.querySelectorAll<HTMLElement>(`#loadSpark-${ex} .ls-bar`)].map((b) => [parseFloat(b.style.height), b.title]),
         warmup: text('warmupCalc-' + ex),
         notes: card.querySelector<HTMLTextAreaElement>('.exercise-notes')!.value,
-        ...(old && { rest: w.repRangeToSeconds(card.querySelector('.set-dot')), rirMax: w.getTargetRIRMax(card) }),
         rows: [...card.querySelectorAll('.set-log-row')].map((row) => {
           const box = (c: string) => row.querySelector<HTMLInputElement>(c)!;
           return {
@@ -54,15 +44,11 @@ export function readCards(page: Page, { oldPage }: { oldPage: boolean }) {
       };
     });
     return out;
-  }, oldPage);
+  });
 }
 
-/**
- * What the modules say a page should show (same shape as readCards).
- * The old page never draws the lasting "PR" tag on load (its function is out
- * of reach of the code that fills the boxes); the rebuilt core does.
- */
-export function expectedCards(state: TrainingState, { oldPage }: { oldPage: boolean }) {
+/** What the modules say the page should show (same shape as readCards). */
+export function expectedCards(state: TrainingState) {
   const unit = state.prefs.unit;
   const out: Record<string, unknown> = {};
   for (const ex of exercises) {
@@ -78,7 +64,6 @@ export function expectedCards(state: TrainingState, { oldPage }: { oldPage: bool
       trend: loadTrend(history).map((p) => [p.height, p.date + (p.est ? ': ~' + formatEstimate(p.est, unit) + ' e1RM' : ': no weight logged')]),
       warmup: steps ? steps.map((s) => `${s.pct}%: ${s.weight}${unit}`).join('') : "Enter set 1's weight first.",
       notes: state.notesMap[ex.key]?.[TODAY] ?? '',
-      ...(oldPage && { rest: restSeconds(ex.reps), rirMax: targetRirMax(ex.rir) }),
       rows: ex.setDots.map((dot) => {
         const b = setBoxes(history, dot.idx, TODAY, unit);
         const delta = compareToLastTime(weightBoxToKg(b.weight, b.weightKg, unit), b.reps, lastTimeThisSet(history, dot.idx, TODAY), unit);
@@ -90,7 +75,7 @@ export function expectedCards(state: TrainingState, { oldPage }: { oldPage: bool
           suggested: b.suggested,
           badge: [delta ? `delta-badge ${delta.className}` : 'delta-badge', delta ? delta.text : ''],
           easy: isEasierThanPrescribed(b.rir, targetRirMax(ex.rir)),
-          prMarker: oldPage ? false : b.pr,
+          prMarker: b.pr,
         };
       }),
     };

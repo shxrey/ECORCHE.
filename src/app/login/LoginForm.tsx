@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useSyncExternalStore, type ClipboardEvent, type FormEvent } from 'react';
-import { DocumentLink } from '@/components/legacy/DocumentLink';
+import { DocumentLink } from '@/components/DocumentLink';
 import { friendlyAuthError } from '@/lib/supabase/auth-errors';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
@@ -93,7 +93,7 @@ export function LoginForm() {
       setError(friendlyAuthError(error));
       return;
     }
-    // Full load, not router.replace: the protocol page's legacy script must boot fresh.
+    // Full load, not router.replace: the protocol page starts fresh, signed in, and sync starts at once.
     window.location.replace('/');
   }
 

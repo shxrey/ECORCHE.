@@ -111,7 +111,7 @@ export function AccountPanel() {
       return;
     }
     forgetDeviceProgress();
-    // Full load, not router.replace: the protocol page's legacy script must boot fresh.
+    // Full load, not router.replace: nothing from the signed-out account stays in memory.
     window.location.replace('/');
   }
 

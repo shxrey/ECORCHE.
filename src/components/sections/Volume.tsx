@@ -8,11 +8,8 @@ const STATS = [
   { num: '3', label: 'Muscles with real room to add sets — lateral delts, hamstrings & calves' },
 ];
 
-/**
- * Weekly hard sets per muscle, against the 10–20 set hypertrophy zone.
- * `liveCounts`: the rebuilt training core draws each card's "N logged so far" line.
- */
-export function Volume({ liveCounts = false }: { liveCounts?: boolean }) {
+/** Weekly hard sets per muscle, against the 10–20 set hypertrophy zone. */
+export function Volume() {
   return (
     <section className="section" id="volume">
       <SectionIntro eyebrow="Volume Audit" title={<>Weekly <Accent>Set Volume</Accent>, Muscle By Muscle</>}>
@@ -32,7 +29,7 @@ export function Volume({ liveCounts = false }: { liveCounts?: boolean }) {
           Schoenfeld, Ogborn &amp; Krieger (2017), J Sports Sci 35(11) — volume dose-response meta-analysis
         </span>
       </div>
-      <VolumeGrid cards={volumeCards} liveCounts={liveCounts} />
+      <VolumeGrid cards={volumeCards} />
       <div className="volume-callout reveal">
         <h4>🧮 How these numbers were counted</h4>
         <p>

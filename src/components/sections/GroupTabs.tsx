@@ -10,7 +10,7 @@ const GROUPS: Group[] = ['push', 'pull', 'legs'];
  * (Anatomy and Sources). Independent of the day chosen at the top of the page.
  *
  * The panels themselves never fade in (only their contents do), so switching
- * a panel's class can't undo the old script's scroll reveal.
+ * a panel's class can't undo the scroll reveal (reveal.ts).
  */
 export function GroupTabs({
   id,

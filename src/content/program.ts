@@ -1,4 +1,4 @@
-// Initially generated from reference/protocol.html by scripts/extract-legacy.mjs.
+// Initially generated from reference/protocol.html by scripts/extract-program.mjs.
 // This file is now the source of truth for the program: edit it here.
 // Exercise keys ("push-a1" ... "legs-b7") and set indices are permanent IDs:
 // saved logs and old JSON backups reference them, so never rename them.

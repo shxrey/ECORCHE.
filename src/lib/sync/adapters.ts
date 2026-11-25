@@ -64,30 +64,10 @@ export function supabaseRemote(supabase: SupabaseClient): SyncRemote {
   };
 }
 
-/** The handle scripts/legacy-bridge.js puts on window once the legacy app has booted. */
-interface LegacyBridgeHandle {
-  readState(): LegacyState;
-  applyState(state: LegacyState): void;
-}
-
-declare global {
-  interface Window {
-    __legacyBridge?: LegacyBridgeHandle;
-  }
-}
-
 /** True while the lifter is typing in the workout, so a pull never yanks a box out from under them. */
 function typingInWorkout(): boolean {
   const el = document.activeElement;
   return !!el && el.matches('input, textarea') && !!el.closest('.exercise-card, #workout');
-}
-
-export function legacyBridge(handle: LegacyBridgeHandle): SyncBridge {
-  return {
-    readState: () => handle.readState(),
-    applyState: state => handle.applyState(state),
-    isBusy: typingInWorkout,
-  };
 }
 
 /** The parts of the training store (src/lib/training/store.ts) sync needs. */
@@ -98,8 +78,8 @@ interface TrainingStoreHandle {
 }
 
 /**
- * The rebuilt training core's store, connected directly (no legacy bridge).
- * `onChange` reports the lifter's own changes, not the ones sync applies.
+ * The training store, as sync sees it. `onChange` reports the lifter's own
+ * changes, not the ones sync applies.
  */
 export function trainingStoreBridge(store: TrainingStoreHandle): { bridge: SyncBridge; onChange(listener: () => void): () => void } {
   let applying = false;
@@ -120,12 +100,4 @@ export function trainingStoreBridge(store: TrainingStoreHandle): { bridge: SyncB
       if (!applying) listener();
     }),
   };
-}
-
-/** Resolves once the legacy runtime has booted and exposed its bridge. */
-export function whenLegacyReady(): Promise<LegacyBridgeHandle> {
-  return new Promise(resolve => {
-    if (window.__legacyBridge) return resolve(window.__legacyBridge);
-    window.addEventListener('legacy:ready', () => resolve(window.__legacyBridge!), { once: true });
-  });
 }

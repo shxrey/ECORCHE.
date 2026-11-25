@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "extract:legacy": "node scripts/extract-legacy.mjs",
+    "extract:program": "node scripts/extract-program.mjs",
     "verify:legacy": "tsx scripts/verify-legacy.tsx",
     "typecheck": "next typegen && tsc --noEmit",
     "test:db": "node supabase/tests/rls.test.mjs",

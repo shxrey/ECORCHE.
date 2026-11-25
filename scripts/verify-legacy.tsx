@@ -1,12 +1,14 @@
-// Proves the React-rendered sections are the same DOM as the original page:
-// renders each one to HTML, normalizes both sides (attribute order, style
-// spacing, comments, data-legacy-on* -> on*) and compares node by node.
+// Proves the page's server HTML is the same DOM as the original single-file
+// page (reference/protocol.html): renders each component to HTML, normalizes
+// both sides (attribute order, style spacing, comments) and compares node by
+// node.
 //
 //   npm run verify:legacy
 //
-// Covers the workout (against reference/protocol.html) and every section listed
-// in PORTED (scripts/legacy-fragments.mjs), against its original HTML with the
-// rebrand edits applied.
+// Covers the workout and every other section of the original page, against
+// its original HTML with the rebrand edits applied (scripts/legacy-fragments.mjs).
+// Where the original had an inline on… handler and React handles that event
+// now, the attribute may be missing; each section reports how many kinds.
 //
 // Spaces matter where a browser shows them: "the <strong>top</strong> of"
 // must keep both spaces, so text keeps a leading/trailing space (shown as ␣)
@@ -31,20 +33,19 @@ import { Tracker } from '../src/components/training/Tracker';
 import { TrainingMinibar } from '../src/components/training/TrainingMinibar';
 import { TrainingWorkout } from '../src/components/training/TrainingWorkout';
 import { Hero } from '../src/components/shell/Hero';
-import { SessionMinibar } from '../src/components/shell/SessionMinibar';
 import { TopNav } from '../src/components/shell/TopNav';
-import { Workout } from '../src/components/workout/Workout';
-import { legacyFragments, PORTED } from './legacy-fragments.mjs';
+import { legacyFragments } from './legacy-fragments.mjs';
 
-/** The React component for each ported fragment. */
+/** The component(s) for each section of the original page, in page order. */
 const SECTIONS: Record<string, ReactElement> = {
   nav: (
     <>
       <TopNav />
-      <SessionMinibar />
+      <TrainingMinibar />
     </>
   ),
   hero: <Hero />,
+  tracker: <Tracker />,
   protocol: <Protocol />,
   standards: <Standards />,
   gauge: <Gauge />,
@@ -52,6 +53,7 @@ const SECTIONS: Record<string, ReactElement> = {
   anatomy: <Anatomy />,
   sources: <Sources />,
   footer: <SiteFooter />,
+  overlays: <Overlays />,
 };
 
 const INLINE = new Set(['a', 'abbr', 'b', 'br', 'code', 'em', 'i', 'mark', 'small', 'span', 'strong', 'sub', 'sup', 'u']);
@@ -80,8 +82,7 @@ function canon(html: string): string[] {
     if (node.type !== 'tag') return;
     const el = node as Element;
     const attrs = Object.entries(el.attribs)
-      .map(([k, v]) => {
-        const name = k.startsWith('data-legacy-') ? k.slice('data-legacy-'.length) : k;
+      .map(([name, v]) => {
         const value = name === 'style' ? v.replace(/\s+/g, '').replace(/;$/, '') : v;
         return ` ${name}="${value}"`;
       })
@@ -96,18 +97,17 @@ function canon(html: string): string[] {
 }
 
 /**
- * `moved` (ported sections only): an element may lose its inline on* handlers
- * when that click is a React handler now; they're collected there. Handlers
- * the old script still runs (data-legacy-on*) must match exactly.
+ * An element may lose its inline on* handlers when that event is a React
+ * handler now; they're collected in `moved`.
  */
-function compare(name: string, original: string, rendered: string, moved?: Set<string>): number {
+function compare(name: string, original: string, rendered: string, moved: Set<string>): number {
   const a = canon(original);
   const b = canon(rendered);
   for (let i = 0; i < Math.max(a.length, b.length); i++) {
     if (a[i] !== b[i]) {
-      const handlers = moved ? (a[i]?.match(/ on[a-z]+="[^"]*"/g) ?? []) : [];
+      const handlers = a[i]?.match(/ on[a-z]+="[^"]*"/g) ?? [];
       if (handlers.length && handlers.reduce((line, h) => line.replace(h, ''), a[i]) === b[i]) {
-        handlers.forEach((h) => moved!.add(h.trim()));
+        handlers.forEach((h) => moved.add(h.trim()));
         continue;
       }
       console.error(`${name}: MISMATCH at node ${i}:`);
@@ -123,46 +123,23 @@ function compare(name: string, original: string, rendered: string, moved?: Set<s
 // The workout, against the original page.
 const src = readFileSync(resolve(__dirname, '../reference/protocol.html'), 'utf8').replace(/\r\n/g, '\n');
 const workoutHtml = src.slice(src.indexOf('<!-- ===== WORKOUT SESSIONS ===== -->'), src.indexOf('<!-- ===== ANATOMY / ENGAGEMENT MAP ===== -->'));
-const rendered = renderToStaticMarkup(<Workout />);
-const nodes = compare('workout', workoutHtml, rendered);
+const rendered = renderToStaticMarkup(<TrainingWorkout />);
+const workoutMoved = new Set<string>();
+const nodes = compare('workout', workoutHtml, rendered, workoutMoved);
 const cards = (rendered.match(/class="exercise-card reveal"/g) || []).length;
 const dots = (rendered.match(/class="set-dot"/g) || []).length;
-console.log(`OK workout: identical to the original (${nodes} nodes, ${cards} exercise cards, ${dots} set dots).`);
+console.log(`OK workout: identical to the original (${nodes} nodes, ${cards} exercise cards, ${dots} set dots; ${workoutMoved.size} kinds of inline handler now in React).`);
 
-// Every ported section, against its original HTML.
+// Every other section, against its original HTML.
 const fragments: Record<string, string> = legacyFragments();
-const ported: string[] = PORTED;
-const missing = ported.filter((n) => !SECTIONS[n]);
-const unlisted = Object.keys(SECTIONS).filter((n) => !ported.includes(n));
-if (missing.length || unlisted.length) {
-  console.error('PORTED (scripts/legacy-fragments.mjs) and SECTIONS here must list the same sections.', { missing, unlisted });
+const missing = Object.keys(fragments).filter((n) => !SECTIONS[n]);
+const unknown = Object.keys(SECTIONS).filter((n) => !(n in fragments));
+if (missing.length || unknown.length) {
+  console.error('Every section of the original page (scripts/legacy-fragments.mjs) needs its component in SECTIONS.', { missing, unknown });
   process.exit(1);
 }
-for (const name of ported) {
+for (const [name, element] of Object.entries(SECTIONS)) {
   const moved = new Set<string>();
-  const count = compare(name, fragments[name], renderToStaticMarkup(SECTIONS[name]), moved);
-  const handlers = moved.size ? `; inline handlers now in React: ${[...moved].join(', ')}` : '';
-  console.log(`OK ${name}: identical to the original (${count} nodes${handlers}).`);
-}
-
-// The training core (the page since 25 Nov 2026): its server HTML must be the original page's too.
-const PREVIEW: Record<string, { original: string; element: ReactElement }> = {
-  'nav + session bar': {
-    original: fragments.nav,
-    element: (
-      <>
-        <TopNav />
-        <TrainingMinibar />
-      </>
-    ),
-  },
-  tracker: { original: fragments.tracker, element: <Tracker /> },
-  'volume (live counts)': { original: fragments.volume, element: <Volume liveCounts /> },
-  workout: { original: workoutHtml, element: <TrainingWorkout /> },
-  'pop-ups': { original: fragments.overlays, element: <Overlays /> },
-};
-for (const [name, { original, element }] of Object.entries(PREVIEW)) {
-  const moved = new Set<string>();
-  const count = compare(`training core: ${name}`, original, renderToStaticMarkup(element), moved);
-  console.log(`OK training core: ${name}: identical to the original (${count} nodes; ${moved.size} kinds of inline handler now in React).`);
+  const count = compare(name, fragments[name], renderToStaticMarkup(element), moved);
+  console.log(`OK ${name}: identical to the original (${count} nodes; ${moved.size} kinds of inline handler now in React).`);
 }

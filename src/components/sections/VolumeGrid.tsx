@@ -24,12 +24,10 @@ const ZONE_STYLE = { left: '41.67%', width: '41.67%' };
  * bars, for search engines and readers without JavaScript.) Tapping a card
  * highlights it and the shown day's exercises for that muscle.
  *
- * Each card's "N logged so far · last trained …" line needs the training
- * data: with `liveCounts` (the training core, on the page since 25 Nov 2026) it comes from
- * the training store; otherwise public/legacy/protocol.js adds it, and React
- * never adds or removes a card's children, so that line is left alone.
+ * Each card's "N logged so far · last trained …" line comes from the
+ * training store.
  */
-export function VolumeGrid({ cards, liveCounts = false }: { cards: VolumeCard[]; liveCounts?: boolean }) {
+export function VolumeGrid({ cards }: { cards: VolumeCard[] }) {
   const hydrated = useHydrated();
   const [grown, setGrown] = useState<ReadonlySet<string>>(() => new Set());
   const [highlighted, setHighlighted] = useState<string | null>(null);
@@ -79,7 +77,7 @@ export function VolumeGrid({ cards, liveCounts = false }: { cards: VolumeCard[];
             {card.sets}
             <span>sets / wk</span>
           </div>
-          {liveCounts ? <VolumeLine muscle={card.muscle} /> : null}
+          <VolumeLine muscle={card.muscle} />
           <div className="volume-track">
             <div className="volume-zone" style={ZONE_STYLE} />
             <div
@@ -96,8 +94,8 @@ export function VolumeGrid({ cards, liveCounts = false }: { cards: VolumeCard[];
 
 /**
  * Briefly glows the exercise cards on the shown day whose muscle tags match
- * `muscle`, and scrolls to the first. The workout is still drawn and switched
- * by the old script, so this works on its DOM, exactly as the old code did.
+ * `muscle`, and scrolls to the first. The workout is another component, so
+ * this works on the page's DOM, exactly as the old code did.
  */
 function glowExercisesFor(muscle: string) {
   const name = muscle.toLowerCase();

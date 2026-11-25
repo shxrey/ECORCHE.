@@ -13,8 +13,9 @@ const HIDDEN = { display: 'none' } as const;
  * studies" button once the page is live; the server HTML lists them all, for
  * search engines and readers without JavaScript.
  *
- * Extra cards are hidden with a style, not a class: the old script marks each
- * card's class when it fades in, and React rewriting the class could undo that.
+ * Extra cards are hidden with a style, not a class: the scroll reveal
+ * (reveal.ts) marks each card's class when it fades in, and React rewriting
+ * the class could undo that.
  */
 export function StudyList({ studies }: { studies: Study[] }) {
   const hydrated = useHydrated();

@@ -4,7 +4,7 @@ import {
   type Change, type LegacyState, type PullResult, type PushPayload, type RecordMap, type RecordValue,
 } from './model';
 
-/** The legacy app, seen from the sync engine (implemented in scripts/legacy-bridge.js). */
+/** The app's data, seen from the sync engine (the training store, through adapters.trainingStoreBridge). */
 export interface SyncBridge {
   readState(): LegacyState;
   applyState(state: LegacyState): void;

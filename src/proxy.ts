@@ -34,7 +34,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    // Pages only: skip build assets, images, and the static legacy script.
-    '/((?!_next/static|_next/image|legacy/|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|js|css|txt|xml|json)$).*)',
+    // Pages only: skip build assets, images and other static files.
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|js|css|txt|xml|json)$).*)',
   ],
 };

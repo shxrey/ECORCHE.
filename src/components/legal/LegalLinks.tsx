@@ -1,4 +1,4 @@
-import { DocumentLink } from '@/components/legacy/DocumentLink';
+import { DocumentLink } from '@/components/DocumentLink';
 import { FEEDBACK_HREF } from '@/lib/feedback';
 import { SUPPORT_EMAIL } from '@/lib/site';
 

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { appPath, openApp } from './helpers';
+import { appReady, openApp } from './helpers';
 
 /** The page around the workout: hero, which day is showing, nav, phone menu, scrolling effects. */
 
@@ -33,7 +33,7 @@ test.describe('hero and the day that is showing', () => {
   });
 
   test('before the page comes alive, the hero describes the whole program', async ({ request }) => {
-    const html = await (await request.get(appPath())).text();
+    const html = await (await request.get('/')).text();
     expect(html).toMatch(/id="heroSubtitle">An evidence-based 6-day Push \/ Pull \/ Legs A-B split/);
     expect(html).toMatch(/id="heroTitle">LEG DAY<br\/?>/);
   });
@@ -45,8 +45,8 @@ test.describe('hero and the day that is showing', () => {
   });
 
   test('opening the site with no address shows Legs A and writes #legsA', async ({ page }) => {
-    await page.goto(appPath());
-    await page.waitForFunction(() => '__legacyBridge' in window || '__training' in window);
+    await page.goto('/');
+    await appReady(page);
     await expect(page).toHaveURL(/#legsA$/);
     await expect(page.locator('#legsA')).toHaveClass(/active/);
   });

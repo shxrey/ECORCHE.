@@ -18,8 +18,8 @@ for (const [seedNo, unit] of [[1, 'kg'], [2, 'lb']] as const) {
     await page.clock.setFixedTime(NOW);
     await seed(page, data.seed);
     await openApp(page);
-    const shown = await readCards(page, { oldPage: false });
-    const expected = expectedCards(data.state, { oldPage: false });
+    const shown = await readCards(page);
+    const expected = expectedCards(data.state);
     const shownHeights = splitHeights(shown);
     const expectedHeights = splitHeights(expected);
     expect(shown).toEqual(expected);

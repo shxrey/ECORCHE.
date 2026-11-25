@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { DocumentLink } from '@/components/legacy/DocumentLink';
+import { DocumentLink } from '@/components/DocumentLink';
 import { loadSupabase } from '@/lib/supabase/load';
 import { useUser } from '@/lib/supabase/useUser';
 import { useSyncState, type SyncState } from '@/lib/sync/status';

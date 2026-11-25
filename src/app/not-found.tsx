@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { DocumentLink } from '@/components/legacy/DocumentLink';
+import { DocumentLink } from '@/components/DocumentLink';
 import '@/styles/auth.css';
 
 export const metadata: Metadata = {

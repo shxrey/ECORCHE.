@@ -1,9 +1,8 @@
 /**
  * Which training day the page is showing: one of six (Push / Pull / Legs × A / B).
  *
- * The hero's buttons, the address ("#pushB"), the page's colour theme and,
- * until the training core moves to React (Phase 3), the old script's workout
- * all follow this one store. The address keeps the shown day across reloads,
+ * The hero's buttons, the address ("#pushB"), the page's colour theme and
+ * the workout all follow this one store. The address keeps the shown day across reloads,
  * and a link or bookmark to "/#pullB" opens Pull B.
  *
  * Works with React's useSyncExternalStore (subscribe / get).

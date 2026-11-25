@@ -16,12 +16,9 @@ const POLL_MS = 45_000;
  * nothing: the app keeps working on its own local copy exactly as before,
  * and this quietly keeps that copy and the account in step. The sync code
  * and the client library are only downloaded once someone is signed in.
- *
- * `source`: whose data to sync. "store" (the page, since 25 Nov 2026) uses
- * the training store directly; "legacy" waits for the old script's bridge
- * (unused now, removed in Phase 4).
+ * It syncs the training store (src/lib/training/client.ts).
  */
-export function CloudSync({ source = 'legacy' }: { source?: 'legacy' | 'store' }) {
+export function CloudSync() {
   const auth = useUser();
   const userId = auth.status === 'signed-in' ? auth.user.id : null;
 
@@ -48,18 +45,11 @@ export function CloudSync({ source = 'legacy' }: { source?: 'legacy' | 'store' }
         clearTimeout(debounce);
         debounce = setTimeout(run, CHANGE_DEBOUNCE_MS);
       };
-      let bridge;
-      if (source === 'store') {
-        const { trainingStore } = await import('@/lib/training/client');
-        const connected = adapters.trainingStoreBridge(trainingStore());
-        bridge = connected.bridge;
-        cleanups.push(connected.onChange(onEdit));
-      } else {
-        bridge = adapters.legacyBridge(await adapters.whenLegacyReady());
-        on(window, 'legacy:change', onEdit);
-      }
+      const { trainingStore } = await import('@/lib/training/client');
       if (stopped) return;
-      engine = new SyncEngine(userId, bridge, adapters.supabaseRemote(supabase), adapters.localSyncStore,
+      const connected = adapters.trainingStoreBridge(trainingStore());
+      cleanups.push(connected.onChange(onEdit));
+      engine = new SyncEngine(userId, connected.bridge, adapters.supabaseRemote(supabase), adapters.localSyncStore,
         (status, pending) => setSyncState({ status, pending }),
       );
       run();
@@ -83,7 +73,7 @@ export function CloudSync({ source = 'legacy' }: { source?: 'legacy' | 'store' }
       cleanups.forEach(c => c());
       setSyncState({ status: 'off', pending: 0 });
     };
-  }, [userId, source]);
+  }, [userId]);
 
   return null;
 }

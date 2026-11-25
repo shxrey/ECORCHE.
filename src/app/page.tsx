@@ -39,7 +39,7 @@ export default function Home() {
       <Protocol />
       <Standards />
       <Gauge />
-      <Volume liveCounts />
+      <Volume />
       <TrainingWorkout />
       <Anatomy />
       <Sources />
@@ -49,7 +49,7 @@ export default function Home() {
       <TrainingRuntime />
       <WorkoutRuntime />
       <AccountNav />
-      <CloudSync source="store" />
+      <CloudSync />
     </>
   );
 }

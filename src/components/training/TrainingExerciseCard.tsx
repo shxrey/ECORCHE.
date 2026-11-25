@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type KeyboardEvent, type MouseEvent } from 'react';
 import { announce } from '@/components/overlays/feedback';
-import { DetailBlockView, MetaPill } from '@/components/workout/ExerciseCard';
+import { DetailBlockView, MetaPill } from './ExerciseDetails';
 import { displayName } from '@/content/names';
 import type { Exercise } from '@/content/types';
 import { trainingStore, useTraining } from '@/lib/training/client';
