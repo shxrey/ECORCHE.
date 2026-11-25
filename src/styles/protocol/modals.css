@@ -1,0 +1,46 @@
+/* The "?" button and the pop-up dialogs: quick reference, Session History, "Are you sure?". */
+
+/* ===== STANDARDS FAB + MODAL ===== */
+.standards-fab {
+  position: fixed; right: var(--space-5); bottom: calc(var(--space-5) + env(safe-area-inset-bottom)); z-index: 150;
+  width: 50px; height: 50px; border-radius: var(--radius-full); background: var(--bg-card);
+  border: 1px solid var(--border-strong); color: var(--accent-bright); font-family: var(--font-display);
+  font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: var(--shadow-3); transition: transform 0.2s var(--ease-spring);
+}
+.standards-fab:hover { transform: scale(1.08); }
+.app-modal-overlay { position: fixed; inset: 0; z-index: 400; background: rgba(5,6,4,0.6); backdrop-filter: blur(18px) saturate(1.3); display: flex; align-items: center; justify-content: center; padding: var(--space-5); opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+.app-modal-overlay.open { opacity: 1; pointer-events: auto; }
+.app-modal {
+  /* No backdrop-filter here — the overlay behind this (.app-modal-overlay,
+     directly above) already blurs the actual page content; this modal's
+     OWN backdrop-filter was blurring an already-blurred backdrop, a
+     redundant second compositing pass for no real visual gain. Bumped
+     the background from 0.9 to 0.96 opacity to compensate for losing
+     that softening. */
+  background: rgba(24,26,21,0.96); border: 1px solid var(--border-strong); border-radius: var(--radius-xl); box-shadow: var(--shadow-3), inset 0 1px 0 rgba(255,255,255,0.06); max-width: 560px; width: 100%; max-height: 82vh; overflow-y: auto; padding: var(--space-6); position: relative;
+}
+.app-modal h3 { font-family: var(--font-display); font-size: 26px; color: var(--ink); margin-bottom: var(--space-4); font-weight: 400; }
+.app-modal .modal-close { position: absolute; top: var(--space-4); right: var(--space-4); width: 44px; height: 44px; border-radius: var(--radius-full); background: var(--bg-elevated); border: 1px solid var(--border); color: var(--ink-muted); cursor: pointer; touch-action: manipulation; }
+.confirm-modal p { color: var(--ink-muted); font-size: 14px; line-height: 1.6; margin-bottom: var(--space-5); }
+.confirm-modal-actions { display: flex; gap: var(--space-3); justify-content: flex-end; }
+.confirm-danger-btn { background: var(--flame-dim); border-color: var(--flame); color: var(--ink); }
+.confirm-danger-btn:hover { background: var(--flame); border-color: var(--flame-bright); color: #fff; }
+.modal-standard-row { padding: var(--space-4) 0; border-bottom: 1px solid var(--border); }
+.modal-standard-row:last-child { border-bottom: none; }
+.modal-standard-row h4 { font-size: 13px; color: var(--accent-bright); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.modal-standard-row p { font-size: 13.5px; color: var(--ink-muted); line-height: 1.6; }
+
+/* ===== SESSION HISTORY MODAL ===== */
+.history-sparkline { display: flex; align-items: flex-end; gap: 3px; height: 80px; margin: var(--space-4) 0; padding: var(--space-3); background: var(--bg-elevated); border-radius: var(--radius-md); border: 1px solid var(--border); }
+.history-sparkline .hs-bar { flex: 1; background: linear-gradient(180deg, var(--accent-bright), var(--accent)); border-radius: 3px 3px 0 0; min-height: 3px; transition: height 0.6s var(--ease-out-expo); }
+.history-sparkline .hs-bar.empty { background: var(--border); }
+/* Per-exercise load trend — same bar-chart idiom as .history-sparkline,
+   just small enough to sit inline under the est-1RM line. */
+.load-sparkline { display: flex; align-items: flex-end; gap: 2px; height: 22px; margin-top: 4px; }
+.load-sparkline .ls-bar { flex: 1; background: linear-gradient(180deg, var(--accent-bright), var(--accent)); border-radius: 2px 2px 0 0; min-height: 2px; max-width: 8px; }
+.load-sparkline:empty { display: none; }
+.history-week-compare { display: flex; gap: var(--space-3); margin-bottom: var(--space-4); }
+.history-week-stat { flex: 1; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-4); text-align: center; }
+.history-week-stat .num { font-family: var(--font-display); font-size: 28px; color: var(--accent-bright); }
+.history-week-stat .lbl { font-size: 11px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; }

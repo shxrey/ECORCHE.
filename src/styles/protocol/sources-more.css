@@ -1,0 +1,6 @@
+/* Sources' "Show N more studies" button. */
+
+/* ===== SOURCES "SHOW MORE" ===== */
+.sources-show-more { display: inline-flex; align-items: center; gap: 6px; margin-top: var(--space-2); background: var(--bg-elevated); border: 1px solid var(--border); color: var(--ink-muted); font-size: 12.5px; font-weight: 600; padding: 8px 16px; border-radius: var(--radius-full); cursor: pointer; }
+.sources-show-more:hover { color: var(--ink); border-color: var(--border-strong); }
+.source-card.sources-hidden { display: none; }

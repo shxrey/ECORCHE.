@@ -1,6 +1,6 @@
 # React rebuild plan
 
-**Status:** proposed 24 November 2026. Tick steps off here as they land.
+**Status:** proposed 24 November 2026; Phases 0–4 done by 25 November 2026. Phase 5 is optional.
 
 The protocol page still runs mostly as the original single-file app: 11 sections of raw HTML
 (`src/legacy/fragments.ts`) plus about 3,000 lines of vanilla JavaScript
@@ -239,10 +239,30 @@ you're happy, `/` switches over.
 
 ## Phase 4: Clean-up (1 session)
 
-- [ ] Delete `protocol.js`, `fragments.ts`, the bridge and the extractor's legacy parts.
-- [ ] With no inline handlers left, the security policy can stop allowing inline scripts:
+- [x] Delete `protocol.js`, `fragments.ts`, the bridge and the extractor's legacy parts.
+  - Done 25 Nov (c6cffb2): 4,052 lines gone, also `LegacyRuntime`, `LegacyFragment`, the
+    old `SessionMinibar` and `components/workout/`, CloudSync's "legacy" source and the
+    extractor's snippet files. The extractor keeps only the program data
+    (`scripts/extract-program.mjs`, `npm run extract:program`) and regenerates `program.ts`
+    byte for byte. `verify:legacy` now checks every section and the workout through their
+    one React component each.
+- [x] With no inline handlers left, the security policy can stop allowing inline scripts:
       a real security improvement.
-- [ ] Split `protocol.css` by component (same rules, same look). Update `CLAUDE.md`.
+  - Done 25 Nov, partly, by choice: inline event handlers (`onclick="…"`, the usual way
+    injected HTML runs code) are now blocked (`script-src-attr 'none'`); no page has any.
+    Inline `<script>` elements stay allowed: Next.js itself inlines each page's data (46
+    scripts on `/`), and the strict alternative, a fresh nonce on every visit, would render
+    every page per request instead of serving it pre-built (slower, and more server time on
+    Vercel). Next's hash-based option (`experimental.sri`) covers script files only, not
+    those inline scripts. `e2e/security.spec.ts` injects an `onerror` handler and checks
+    that the browser blocks it.
+- [x] Split `protocol.css` by component (same rules, same look). Update `CLAUDE.md`.
+  - Done 25 Nov: `src/styles/protocol/` has 26 files, cut at the original stylesheet's own
+    section markers and imported in its order by `protocol.css` (later rules win ties, so
+    the order is kept). The built CSS is identical to before apart from 26 line breaks
+    between files; the pixel check's 38 pictures are identical too. Unused rules for the old
+    script's classes (`.kiosk-fade` and similar) are still there, for the redesign to drop.
+    `CLAUDE.md` and the README describe the finished rebuild.
 
 ## Phase 5: Lighter page (optional; measure first)
 

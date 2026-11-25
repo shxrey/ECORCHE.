@@ -1,6 +1,8 @@
-/* Small fixes layered over the original stylesheet. protocol.css is
-   regenerated from the original HTML by scripts/extract-legacy.mjs, so
-   corrections to it live here (loaded right after it) instead. */
+/* Small fixes and additions layered over the original stylesheet
+   (src/styles/protocol.css), loaded right after it, so they win ties. They
+   live here because that stylesheet used to be regenerated from the
+   original HTML; they can move into src/styles/protocol/ when the redesign
+   rewrites the styles. */
 
 /* Sources tab bar ("Push-Specific / Pull-Specific / Legs-Specific"): at its
    original size it is ~370px wide, more than a phone's content area, which

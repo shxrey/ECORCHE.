@@ -1,0 +1,6 @@
+/* The footer (src/components/sections/SiteFooter.tsx). */
+
+/* ===== FOOTER ===== */
+.site-footer { text-align: center; padding: 60px 24px; border-top: 1px solid var(--border); color: var(--ink-dim); font-size: 13px; }
+.site-footer .logo-text { font-family: var(--font-display); font-size: 28px; color: var(--ink); margin-bottom: 8px; }
+.site-footer .logo-text span { color: var(--moss); }

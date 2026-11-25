@@ -1,0 +1,24 @@
+/* The top nav (src/components/shell/TopNav.tsx). */
+
+/* ===== NAV ===== */
+.top-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 16px 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  background: linear-gradient(180deg, rgba(10,11,8,0.72) 0%, rgba(10,11,8,0.5) 100%);
+  /* Dropped saturate() and cut the blur radius: chained filters run as
+     sequential full-resolution passes (blur, then saturate on top of
+     that result), so removing saturate cuts this roughly in half on its
+     own. Lowering the radius on top of that trims the sampling kernel
+     further — still reads as frosted glass, just no longer the most
+     expensive blur+filter combo available, which is what mobile GPUs
+     were choking on every scroll frame. */
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.nav-logo { font-family: var(--font-display); font-size: 22px; letter-spacing: 0.03em; color: var(--ink); }
+.nav-logo span { color: var(--moss); }
+.nav-links { display: flex; gap: 28px; }
+.nav-links a { color: var(--ink-muted); text-decoration: none; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; transition: color 0.2s; }
+.nav-links a:hover { color: var(--moss-bright); }

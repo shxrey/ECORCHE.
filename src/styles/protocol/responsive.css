@@ -1,0 +1,41 @@
+/* Phone and tablet layout for the sections above. */
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .hero { padding: 110px 20px 60px; }
+  /* Grid + named areas instead of flex + order: the previous flex-wrap
+     layout (5 children rearranged via `order`) could spill into a
+     ragged 3rd row on narrow viewports or with larger system font
+     sizes, with the expand chevron ending up wherever the wrap left it.
+     This guarantees the chevron is always top-right, and gives the
+     meta-pills and set-tracker each their own full-width row so neither
+     has to compete for space with the other. */
+  .exercise-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "num info expand"
+      "meta meta meta"
+      "sets sets sets";
+    align-items: center;
+    padding: 16px 18px;
+    gap: 10px 12px;
+  }
+  .exercise-header .exercise-number { grid-area: num; font-size: 26px; min-width: 32px; }
+  .exercise-header .exercise-info { grid-area: info; min-width: 0; }
+  .exercise-header .exercise-info h3 { font-size: 14.5px; }
+  .exercise-header .expand-icon { grid-area: expand; width: 30px; height: 30px; }
+  .exercise-header .exercise-meta { grid-area: meta; flex-wrap: wrap; gap: 8px; }
+  .exercise-header .meta-pill { padding: 6px 10px; }
+  .exercise-header .meta-pill .label { font-size: 9px; }
+  .exercise-header .meta-pill .value { font-size: 12.5px; }
+  .exercise-header .set-tracker { grid-area: sets; justify-content: flex-end; gap: 5px; }
+  .exercise-body-inner { padding: 0 20px 24px; }
+  .nav-links { display: none; }
+  .section { padding: 60px 20px; }
+  .rir-scale { flex-direction: column; }
+  .rir-step { min-width: auto; }
+}
+
+.reveal { opacity: 0; transform: translateY(28px); transition: all 0.7s cubic-bezier(0.22,1,0.36,1); }
+.reveal.visible { opacity: 1; transform: translateY(0); }

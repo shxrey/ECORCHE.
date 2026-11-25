@@ -1,0 +1,14 @@
+/* Phone sizes for the menu button, set buttons, session bar, timers and "?" button. */
+
+@media (max-width: 768px) {
+  .hamburger-btn { display: flex; }
+  .set-dot { width: 42px; height: 42px; border-radius: var(--radius-md); font-size: 13px; }
+  /* Same overlap-avoidance rule as the desktop comment above: the tightest
+     mobile gap context (.exercise-header .set-tracker) is 5px, so 42+5=47px
+     is the largest hit-area that stays collision-free with the neighbor. */
+  .set-dot::after { width: 47px; height: 47px; }
+  .session-minibar { padding: 8px 16px; font-size: 12px; }
+  .rest-timer { right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .tempo-pacer { left: 16px; right: auto; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .standards-fab { right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); width: 44px; height: 44px; }
+}

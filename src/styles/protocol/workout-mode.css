@@ -1,0 +1,85 @@
+/* Workout Mode; the session bar's voice and contrast switches; high contrast; finished exercises; the progress ring and "Next:" line. */
+
+/* ===== KIOSK / WORKOUT MODE ===== */
+.kiosk-fade { transition: opacity 0.35s var(--ease-smooth); }
+.kiosk-fade.kiosk-hidden-fade { opacity: 0; pointer-events: none; }
+.kiosk-fade.kiosk-collapsed { display: none !important; }
+body.kiosk-mode .session-minibar { margin-top: 0; }
+body.kiosk-mode #workout { padding-top: 12px; }
+.minibar-kiosk-btn, .progress-kiosk-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-bright));
+  color: var(--bg); border: none; font-weight: 700; font-size: 12px;
+  padding: 8px 16px; border-radius: var(--radius-full); cursor: pointer;
+  font-family: var(--font-body); transition: transform 0.2s var(--ease-spring);
+  flex-shrink: 0;
+}
+.minibar-kiosk-btn:hover, .progress-kiosk-btn:hover { transform: scale(1.05); }
+body.kiosk-mode .minibar-kiosk-btn, body.kiosk-mode .progress-kiosk-btn {
+  background: var(--bg-elevated); color: var(--ink); border: 1px solid var(--border-strong);
+}
+.session-minibar { flex-wrap: wrap; row-gap: 6px; }
+
+/* ---- Audio announcements mute toggle (minibar) ---- */
+.mb-audio-btn {
+  width: 30px; height: 30px; border-radius: var(--radius-full); flex-shrink: 0;
+  border: 1px solid var(--border); background: var(--bg-elevated); color: var(--ink-muted);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; line-height: 1; transition: color 0.2s, border-color 0.2s;
+}
+.mb-audio-btn:hover { color: var(--ink); border-color: var(--accent); }
+.mb-audio-btn.muted { color: var(--ink-dim); }
+.mb-audio-btn.active { color: var(--accent-bright); border-color: var(--accent); }
+
+/* High-contrast gym mode: boosted borders + muted text + bigger base
+   font, for glare/sweat conditions where the default subtle dark theme
+   gets hard to read. Body-scoped custom-property overrides cascade to
+   every var(--border)/var(--ink-muted) usage in the app automatically. */
+body.high-contrast {
+  --border: rgba(255,255,255,0.22);
+  --border-strong: rgba(255,255,255,0.32);
+  --ink-muted: #B0B6A6;
+  font-size: 18px;
+}
+
+/* ---- Auto-collapse + dim finished exercises (kiosk "tunnel vision") ---- */
+/* !important on opacity is needed because .exercise-card's own scroll-reveal
+   animation (fadeUp, fill-mode forwards) otherwise keeps winning over a
+   plain opacity rule regardless of selector specificity. */
+/* filter (not opacity) for the dimmed state — opacity blends the whole
+   card toward the page background, which crushes text contrast under
+   gym glare; brightness/saturate mute the colors in place without
+   erasing them toward the backdrop. */
+body.kiosk-mode .exercise-card.kiosk-complete { filter: brightness(0.62) saturate(0.75); }
+body.kiosk-mode .exercise-card.kiosk-complete:hover { filter: brightness(0.88) saturate(0.9); }
+
+/* Small always-visible "done" cue — a left accent border plus a checkmark
+   badge over the exercise number — independent of kiosk mode's dimming. */
+.exercise-card.exercise-complete { border-left: 3px solid var(--accent); }
+.exercise-card.exercise-complete .exercise-number { position: relative; }
+.exercise-card.exercise-complete .exercise-number::after {
+  content: '✓'; position: absolute; top: -2px; right: -2px;
+  width: 18px; height: 18px; border-radius: 50%; background: var(--accent);
+  color: #fff; font-size: 11px; font-family: var(--font-mono); font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 0 8px var(--accent-glow); animation: setDotPop 0.4s var(--ease-spring);
+}
+
+/* ---- Sticky progress ring (kiosk mode only) ---- */
+.mb-progress-ring { display: none; align-items: center; gap: 7px; position: relative; }
+body.kiosk-mode .mb-progress-ring { display: flex; }
+body.kiosk-mode .mb-progress { display: none; }
+.mb-ring-track { fill: none; stroke: rgba(255,255,255,0.14); stroke-width: 3; }
+.mb-ring-fill {
+  fill: none; stroke: var(--accent-bright); stroke-width: 3; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 15px 15px;
+  transition: stroke-dashoffset 0.35s var(--ease-out-expo);
+}
+.mb-ring-text { font-family: var(--font-mono); font-size: 11px; color: var(--ink); font-weight: 700; }
+
+/* ---- "Next Up" teaser (kiosk mode only) ---- */
+.next-up-teaser {
+  display: none; margin-top: var(--space-4); padding-top: var(--space-3);
+  border-top: 1px dashed var(--border); font-size: 12px; color: var(--ink-dim);
+  font-style: italic;
+}
+body.kiosk-mode .next-up-teaser:not(:empty) { display: block; }

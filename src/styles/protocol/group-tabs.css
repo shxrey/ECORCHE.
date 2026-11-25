@@ -1,0 +1,9 @@
+/* The Push / Pull / Legs tab bars (hero, Anatomy, Sources). */
+
+/* ===== GROUP TABS (top-level Push / Pull / Legs selector) ===== */
+.group-tabs { display: inline-flex; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 100px; padding: 5px; gap: 4px; margin-bottom: 22px; animation: fadeUp 0.6s 0.05s ease forwards; opacity: 0; }
+.group-tab { position: relative; padding: 10px 26px; border: none; background: transparent; color: var(--ink-muted); font-family: var(--font-body); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 100px; transition: all 0.3s ease; }
+.group-tab:hover { color: var(--ink); }
+.group-tab.active[data-tab-group="push"] { color: var(--bg); background: linear-gradient(135deg, var(--flame), var(--flame-bright)); }
+.group-tab.active[data-tab-group="pull"] { color: var(--bg); background: linear-gradient(135deg, var(--moss), var(--moss-bright)); }
+.group-tab.active[data-tab-group="legs"] { color: var(--bg); background: linear-gradient(135deg, var(--frost), var(--frost-bright)); }

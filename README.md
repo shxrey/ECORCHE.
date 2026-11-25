@@ -14,7 +14,7 @@ npm run dev        # http://localhost:3000
 npm run build      # production build
 npm run typecheck
 npm run test:db    # schema, row-level security + sync functions (in-memory Postgres)
-npm run test:sync  # sync engine: simulated phone + laptop against a last-write-wins server
+npm run test:unit  # sync engine (simulated phone + laptop), training rules and store, auth helpers
 ```
 
 Without Supabase settings the app runs local-only, exactly like the original. To enable accounts, create `.env.local`:
@@ -34,20 +34,18 @@ Both values are public by design. Security comes from row-level security in Post
 - **Cloud sync** ([`src/lib/sync`](src/lib/sync)): offline-first. The app always works on its own local copy; the sync engine diffs it into small records (a tick, one set's log, a note, a day's count, settings), queues changes in an outbox that survives offline use and closed tabs, and syncs through two Postgres functions, `sync_push` / `sync_pull` ([`0002_sync.sql`](supabase/migrations/0002_sync.sql)). Conflicts are last-write-wins per record, enforced on the server, so a phone that was offline all week can't overwrite newer edits from the laptop. Removals sync as tombstones. On a device's first sign-in, its existing progress (including anything restored from an old JSON backup) uploads without overriding the account.
 - **Email template:** [`supabase/templates/login-email.html`](supabase/templates/login-email.html).
 
-## How the port works
+## How it's built
 
-The app started as one 450 KB HTML file. It is being migrated with the **strangler pattern**: the new app ships from day one looking and behaving exactly like the original, and pieces move into React one at a time.
+The app started as one 450 KB HTML file and was rebuilt in React step by step ([`docs/react-rebuild-plan.md`](docs/react-rebuild-plan.md)), looking and behaving exactly like the original throughout and keeping its saved data.
 
 | Path | What it is |
 |---|---|
-| `src/content/program.ts` | The program as typed data: 6 days, 46 exercises, cues, MVIC activation, citations. **Source of truth.** |
-| `src/components/workout/` | `Workout` → `DayContent` → `ExerciseCard`, rendered from `program.ts`. |
-| `src/styles/protocol.css` | The original design system, ported verbatim (fonts self-hosted via `next/font`). |
-| `src/legacy/fragments.ts` | Sections not yet ported to React (hero, tracker, gauge, volume matrix, anatomy, sources…). |
-| `public/legacy/protocol.js` | The original client logic, loaded after hydration by `LegacyRuntime`. Shrinks as features move to React. |
+| `src/content/program.ts` | The program as typed data: 6 days, 46 exercises, cues, MVIC activation, citations. Generated from the reference by `npm run extract:program`. |
+| `src/components/` | The page in React: `shell/` (nav, hero), `sections/` (the reading sections), `training/` (tracker, workout, session bar, timers), `overlays/` (pop-ups, toasts). |
+| `src/lib/training/` | The training rules (e1RM, PRs, progress, backups, CSV) and the store that saves to localStorage. |
+| `src/styles/protocol/` | The original design system, split by part of the page (fonts self-hosted via `next/font`). |
 | `reference/protocol.html` | Frozen snapshot of the original single-file app. |
-| `scripts/extract-legacy.mjs` | One-shot generator that produced the files above from the reference. |
-| `scripts/verify-legacy.tsx` | `npm run verify:legacy`: proves the React workout markup is node-for-node identical to the original. |
+| `scripts/verify-legacy.tsx` | `npm run verify:legacy`: proves every section and the workout render node-for-node the original's markup. |
 
 **Permanent IDs:** exercise keys (`push-a1` … `legs-b7`) and set indices are storage keys. Saved logs and old JSON backups depend on them, so never rename them.
 
@@ -56,4 +54,5 @@ The app started as one 450 KB HTML file. It is being migrated with the **strangl
 1. ✅ Next.js port, pixel-identical to the original, live on Vercel
 2. ✅ Supabase auth (email code) + Postgres schema with row-level security
 3. ✅ Cloud sync of sets, logs, notes and settings (offline-first, last-write-wins); old JSON backups upload via Import Backup
-4. Port legacy sections and logic to React components; PWA / offline support back
+4. ✅ Rebuild every section and the training logic in React (same look, same saved data)
+5. Gothic / dark-academia redesign; PWA / offline support back

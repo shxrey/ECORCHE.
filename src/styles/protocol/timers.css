@@ -1,0 +1,33 @@
+/* The rest timer and tempo pacer (src/components/overlays/Overlays.tsx). */
+
+/* ===== REST TIMER PILL ===== */
+.rest-timer {
+  position: fixed; right: var(--space-5); bottom: calc(var(--space-5) + env(safe-area-inset-bottom)); z-index: 200;
+  background: var(--bg-card); border: 1px solid var(--border-strong); border-radius: var(--radius-full);
+  box-shadow: var(--shadow-3); padding: 10px 10px 10px 20px;
+  display: flex; align-items: center; gap: var(--space-3);
+  transform: translateY(140%); transition: transform 0.4s var(--ease-spring);
+}
+.rest-timer.visible { transform: translateY(0); }
+/* Tempo pacer reuses .rest-timer's shape/slide-in mechanics but sits on
+   the opposite corner so the two floating widgets can't collide. */
+.tempo-pacer { left: var(--space-5); right: auto; }
+.tempo-pacer.phase-lower { border-color: var(--accent); }
+.tempo-pacer.phase-hold { border-color: var(--gold); }
+.tempo-pacer.phase-drive { border-color: var(--accent-bright); }
+/* Was animating box-shadow AND border-color directly — both are
+   paint-triggering, not compositable, and this runs infinite for as
+   long as the timer sits at zero. Border color is now a static red;
+   the pulsing ring is a pseudo-element whose opacity alone animates. */
+.rest-timer.done { border-color: var(--danger); }
+.rest-timer.done::after {
+  content: ''; position: absolute; inset: -2px; border-radius: inherit;
+  box-shadow: 0 0 0 8px var(--danger-soft); pointer-events: none;
+  opacity: 0; animation: restDone 0.9s ease-in-out infinite;
+}
+@keyframes restDone { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+.rest-timer .rt-time { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: var(--ink); min-width: 52px; text-align: center; }
+.rest-timer .rt-label { font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; }
+.rest-timer .rt-btn { width: 44px; height: 44px; border-radius: var(--radius-full); border: 1px solid var(--border); background: var(--bg-elevated); color: var(--ink-muted); cursor: pointer; font-family: var(--font-mono); font-size: 12px; touch-action: manipulation; }
+.rest-timer .rt-btn:hover { color: var(--ink); border-color: var(--accent); }
+.rest-timer .rt-close { width: 44px; height: 44px; border-radius: var(--radius-full); border: none; background: transparent; color: var(--ink-dim); cursor: pointer; touch-action: manipulation; }

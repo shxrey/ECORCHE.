@@ -1,0 +1,48 @@
+/* Each exercise's session log: weight, reps and RIR boxes, badges, notes, trend bars (src/components/training/LogPanel.tsx). */
+
+/* ===== SET LOGGER + NOTES (injected into each expanded card) ===== */
+.set-log-panel { margin-top: var(--space-5); padding-top: var(--space-5); border-top: 1px solid var(--border); }
+.set-log-panel h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-dim); margin-bottom: var(--space-3); }
+.set-log-row { display: flex; align-items: center; gap: var(--space-2); font-size: 12.5px; color: var(--ink-muted); margin-bottom: var(--space-2); font-family: var(--font-mono); }
+/* Logged RIR came in above the exercise's prescribed range — set was
+   easier than called for. Subtle amber cue, not a hard error state. */
+.set-log-row.rir-easy { color: var(--gold); }
+.set-log-row.rir-easy .log-rir { border-color: var(--gold); }
+.pr-persistent-badge {
+  display: inline-flex; align-items: center; gap: 3px; margin-left: 6px;
+  padding: 1px 7px; border-radius: 999px; font-size: 10px; font-weight: 700;
+  font-family: var(--font-mono); background: var(--gold-dim, rgba(232,178,61,0.18));
+  color: var(--gold); border: 1px solid var(--gold);
+}
+.pr-persistent-badge::before { content: '★'; font-size: 9px; }
+.delta-badge { font-size: 11.5px; font-family: var(--font-mono); margin-left: 4px; }
+.delta-badge:empty { display: none; }
+.delta-badge.delta-up { color: var(--moss-bright, #4CAF7D); }
+.delta-badge.delta-flat { color: var(--ink-dim); }
+.delta-badge.delta-down { color: var(--gold); }
+.delta-badge { font-size: 11px; font-weight: 700; margin-left: 4px; }
+.delta-badge.delta-up { color: var(--moss-bright); }
+.delta-badge.delta-flat { color: var(--ink-dim); font-weight: 500; }
+.delta-badge.delta-down { color: var(--flame-bright); }
+.warmup-toggle-btn {
+  margin-top: var(--space-2); padding: 6px 12px; font-size: 12px; font-family: var(--font-mono);
+  background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--ink-muted); cursor: pointer; touch-action: manipulation;
+}
+.warmup-toggle-btn:hover { color: var(--ink); border-color: var(--accent); }
+.warmup-calc { display: none; gap: var(--space-3); margin-top: var(--space-2); font-family: var(--font-mono); font-size: 12.5px; }
+.warmup-calc.open { display: flex; flex-wrap: wrap; }
+.warmup-calc .warmup-step { color: var(--ink-muted); }
+.warmup-calc .warmup-step b { color: var(--ink); }
+.warmup-calc .warmup-hint { color: var(--ink-dim); }
+/* width/height sized for sweaty-thumb gym use: 44px min-height meets the
+   touch-target guideline, and 16px font-size stops iOS/Android from
+   auto-zooming the page on focus (anything under 16px triggers it). */
+.log-input { width: 76px; min-height: 44px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--ink); font-family: var(--font-mono); font-size: 16px; padding: 10px 8px; text-align: center; }
+/* Auto-filled from last session, not yet confirmed by the user today. */
+.log-input.log-input-suggested { color: var(--ink-dim); border-style: dashed; }
+.log-input:focus { border-color: var(--accent); outline: none; }
+.exercise-notes { width: 100%; margin-top: var(--space-3); min-height: 64px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--ink); font-family: var(--font-body); font-size: 13px; padding: var(--space-3); resize: vertical; }
+.exercise-notes:focus { border-color: var(--accent); outline: none; }
+.last-log { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-dim); margin-top: 4px; }
+.last-log:empty { display: none; }

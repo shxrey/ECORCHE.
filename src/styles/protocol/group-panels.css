@@ -1,0 +1,6 @@
+/* Anatomy and Sources tab panels, one shown at a time. */
+
+/* ===== ANATOMY / SOURCES GROUP PANELS ===== */
+.anatomy-panel, .sources-group-panel { display: none; }
+.anatomy-panel.active, .sources-group-panel.active { display: block; animation: fadeIn 0.5s ease; }
+.sources-core-note { font-size: 13px; color: var(--ink-dim); margin: -8px 0 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }

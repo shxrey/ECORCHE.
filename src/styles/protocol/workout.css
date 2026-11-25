@@ -1,0 +1,136 @@
+/* The workout: each day's progress ring, the exercise cards and set buttons, and which day is shown (src/components/training/). */
+
+/* ===== SESSION PROGRESS BAR ===== */
+.progress-bar-wrap { display: flex; align-items: center; gap: 18px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 16px 22px; margin-bottom: 36px; flex-wrap: wrap; }
+.progress-ring { position: relative; width: 58px; height: 58px; flex-shrink: 0; }
+.progress-ring svg { transform: rotate(-90deg); width: 58px; height: 58px; }
+.progress-ring-bg { fill: none; stroke: var(--border); stroke-width: 5; }
+.progress-ring-fill { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; transition: stroke-dashoffset 0.4s cubic-bezier(0.22,1,0.36,1); }
+.progress-ring-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--ink); }
+.progress-info { flex: 1; min-width: 180px; }
+.progress-info h5 { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+.progress-info p { font-size: 12px; color: var(--ink-muted); }
+.reset-btn { background: var(--bg-elevated); border: 1px solid var(--border); color: var(--ink-muted); font-size: 12px; font-weight: 600; padding: 10px 16px; border-radius: 10px; cursor: pointer; transition: all 0.2s; font-family: var(--font-body); }
+.reset-btn:hover { color: var(--ink); border-color: var(--border-strong); }
+.reset-btn.active-toggle { background: var(--accent-dim); border-color: var(--accent); color: var(--ink); }
+.reset-btn.active-toggle:hover { border-color: var(--accent-bright); }
+
+/* ===== EXERCISE CARDS ===== */
+.exercise-list { display: flex; flex-direction: column; gap: 16px; }
+.exercise-card {
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+  transition: transform 0.3s var(--ease-spring), box-shadow 0.3s ease, border-color 0.3s ease, opacity 0.4s ease;
+  opacity: 0; animation: fadeUp 0.5s ease forwards;
+  box-shadow: var(--shadow-1);
+  contain: layout style paint;
+  container-type: inline-size;
+}
+.exercise-card { position: relative; }
+.exercise-card::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: var(--shadow-2), 0 0 30px -14px var(--accent-glow); opacity: 0; transition: opacity 0.25s var(--ease-smooth);
+}
+@media (hover: hover) {
+  .exercise-card:hover { border-color: var(--border-strong); transform: translateY(-2px) scale(1.005); }
+  .exercise-card:hover::before { opacity: 1; }
+}
+.exercise-card.expanded { border-color: rgba(54,153,115,0.25); box-shadow: var(--shadow-3), 0 0 40px -10px var(--accent-glow); }
+@container (max-width: 560px) {
+  .exercise-header { grid-template-columns: auto 1fr auto; }
+}
+
+.exercise-header { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 18px; padding: 24px 28px; cursor: pointer; transition: background 0.2s; user-select: none; -webkit-user-select: none; }
+.exercise-header:hover { background: var(--bg-card-hover); }
+.exercise-number { font-family: var(--font-display); font-size: 36px; color: var(--accent); line-height: 1; min-width: 44px; text-align: center; text-shadow: 0 0 20px var(--accent-glow), 0 0 6px var(--accent-glow); }
+.exercise-info h3 { font-size: 17px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.exercise-info .muscle-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.muscle-tag { font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+.tag-lat { background: var(--moss-glow); color: var(--moss-bright); }
+.tag-midback { background: var(--gold-soft); color: var(--gold-bright); }
+.tag-reardelt { background: var(--violet-soft); color: var(--violet-bright); }
+.tag-bicep { background: var(--steel-soft); color: var(--steel-bright); }
+.tag-forearm { background: var(--ember-soft); color: var(--ember-bright); }
+
+.exercise-meta { display: flex; align-items: center; gap: 12px; }
+.meta-pill { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 14px; background: var(--bg-elevated); border-radius: 12px; border: 1px solid var(--border); }
+.meta-pill .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-dim); }
+.meta-pill .value { font-family: var(--font-mono); font-size: 14px; font-weight: 600; color: var(--ink); }
+.meta-pill.danger { border-color: rgba(242,67,74,0.35); }
+.meta-pill.danger .value { color: var(--danger-bright); }
+
+.set-tracker { display: flex; gap: 6px; align-items: center; touch-action: manipulation; }
+.set-dot {
+  appearance: none; -webkit-appearance: none; position: relative;
+  width: 26px; height: 26px; border-radius: 8px; border: 1px solid var(--border-strong);
+  background: var(--bg-elevated); color: var(--ink-dim); font-family: var(--font-mono);
+  font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+/* Invisible hit-area larger than the visual 26x26 dot, without changing its look —
+   important for sweaty/shaky hands mid-set. Apple/Google recommend 44x44, but the
+   dots sit only 6px apart (.set-tracker gap), so a full 44px would overlap the
+   neighboring dot's hit-area and cause misclicks; 32px (the dot's full center-to-
+   center pitch) is the largest size that stays collision-free here. */
+.set-dot::after {
+  content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 32px; height: 32px;
+}
+.set-dot { transition: transform 0.2s var(--ease-spring), border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, color 0.2s ease; }
+.set-dot:hover { border-color: var(--accent); color: var(--ink); transform: scale(1.12); box-shadow: 0 0 0 4px var(--accent-glow); }
+.set-dot.done { background: linear-gradient(135deg, var(--accent), var(--accent-dim)); border-color: var(--accent); color: #fff; animation: setDotPop 0.35s var(--ease-spring); box-shadow: 0 0 12px var(--accent-glow); }
+@keyframes setDotPop { 0% { transform: scale(1); } 45% { transform: scale(1.22); } 100% { transform: scale(1); } }
+
+/* Haptic-style ripple: a ring that fires outward from the dot's own border
+   and fades, the instant a set is marked done — the visual equivalent of a
+   satisfying click. Re-fires every time .done is (re)applied since the
+   rule only becomes active while the class is present. */
+.set-dot::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  border: 2px solid var(--accent-bright); opacity: 0; pointer-events: none;
+}
+.set-dot.done::before { animation: setDotRipple 0.6s var(--ease-out-expo); }
+@keyframes setDotRipple {
+  0% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.9); }
+}
+
+.expand-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--ink-muted); transition: all 0.3s; flex-shrink: 0; }
+.exercise-card.expanded .expand-icon { transform: rotate(180deg); background: var(--accent-glow); border-color: var(--accent); color: var(--accent-bright); }
+
+.exercise-body { overflow: hidden; max-height: 0; transition: max-height 0.5s cubic-bezier(0.22,1,0.36,1); }
+.exercise-body-inner { min-height: 0; overflow: hidden; padding: 0 28px 28px; border-top: 1px solid var(--border); }
+.body-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; padding-top: 28px; }
+@media (max-width: 768px) { .body-grid { grid-template-columns: 1fr; } }
+
+.detail-block h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-dim); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.detail-block h4::before { content: ''; width: 20px; height: 2px; background: var(--accent); border-radius: 2px; }
+.detail-text { color: var(--ink-muted); font-size: 14px; line-height: 1.7; }
+.detail-text + .detail-text { margin-top: 10px; }
+.detail-text strong { color: var(--ink); }
+.sub-label { display: inline-block; font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--accent-bright); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+
+.superset-divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; }
+.superset-divider::before, .superset-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.superset-divider span { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+
+.activation-chart { margin-top: 4px; }
+.activation-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.activation-label { font-size: 12px; font-weight: 600; color: var(--ink-muted); min-width: 118px; text-transform: uppercase; letter-spacing: 0.04em; }
+.activation-bar-wrap { flex: 1; height: 26px; background: var(--bg-elevated); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid var(--border); }
+.activation-bar { height: 100%; width: 100%; border-radius: 8px; position: relative; transition: transform 1.1s cubic-bezier(0.22,1,0.36,1); transform: scaleX(0); transform-origin: left; display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; }
+.activation-bar .pct { font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+.bar-lat { background: linear-gradient(90deg, var(--moss-dim), var(--moss)); }
+.bar-midback { background: linear-gradient(90deg, #B8862A, var(--gold)); }
+.bar-reardelt { background: linear-gradient(90deg, #6B4A9C, var(--violet)); }
+.bar-bicep { background: linear-gradient(90deg, #2C5FA0, var(--steel)); }
+.bar-forearm { background: linear-gradient(90deg, #9C5320, var(--ember)); }
+
+.intensity-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; margin-top: 4px; }
+.intensity-failure { background: var(--danger-soft); color: var(--danger-bright); border: 1px solid rgba(242,67,74,0.25); }
+.intensity-rir1 { background: var(--moss-glow); color: var(--moss-bright); border: 1px solid rgba(54,153,115,0.25); }
+.intensity-rir2 { background: var(--gold-soft); color: var(--gold-bright); border: 1px solid rgba(232,178,61,0.25); }
+.source-note { margin-top: 12px; font-size: 12px; color: var(--ink-dim); line-height: 1.6; }
+
+/* ===== HIDE/SHOW DAY ===== */
+.day-content { display: none; }
+.day-content.active { display: block; animation: fadeIn 0.5s ease; }

@@ -1,0 +1,9 @@
+/* Every section's layout: width, eyebrow, title, subtitle. */
+
+/* ===== SECTIONS ===== */
+.section { max-width: 1200px; margin: 0 auto; padding: 84px 24px; position: relative; }
+.section-eyebrow { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.19em; text-transform: uppercase; color: var(--accent-bright); margin-bottom: 14px; display: flex; align-items: center; gap: 10px; }
+.section-eyebrow::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+.section-title { font-family: var(--font-display); font-weight: 400; font-size: clamp(34px, 4.6vw, 54px); color: var(--ink); margin-bottom: 12px; line-height: 1; letter-spacing: 0.01em; }
+.section-title .accent { color: var(--accent); }
+.section-subtitle { color: var(--ink-muted); font-size: 16px; max-width: 640px; margin-bottom: 48px; }

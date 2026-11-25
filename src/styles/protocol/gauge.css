@@ -1,0 +1,23 @@
+/* The intensity gauge (src/components/sections/Gauge.tsx). */
+
+/* ===== PRESSURE GAUGE ===== */
+.gauge-panel { display: grid; grid-template-columns: 320px 1fr; gap: 44px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px; }
+@media (max-width: 800px) { .gauge-panel { grid-template-columns: 1fr; } }
+.gauge-svg-wrap { display: flex; flex-direction: column; align-items: center; }
+.gauge-svg { width: 100%; max-width: 300px; }
+.gauge-seg-fail { stroke: var(--danger); }
+.gauge-seg-1 { stroke: var(--moss); }
+.gauge-seg-2 { stroke: var(--gold); }
+.gauge-seg-3 { stroke: var(--steel); }
+.gauge-needle { stroke: var(--ink); transform-origin: 150px 170px; animation: needleSettle 1.2s cubic-bezier(0.22,1,0.36,1) forwards; }
+.gauge-caption { font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim); margin-top: 8px; text-align: center; }
+.gauge-caption strong { color: var(--ink-muted); }
+
+.rir-scale { display: flex; gap: 8px; flex-wrap: wrap; }
+.rir-step { flex: 1; min-width: 110px; text-align: center; padding: 14px 10px; border-radius: 12px; border: 1px solid var(--border); background: var(--bg-elevated); transition: all 0.2s; }
+.rir-step.recommended { border-color: currentColor; background: var(--bg-card-hover); transform: scale(1.03); }
+.rir-step .rir-num { font-family: var(--font-mono); font-size: 19px; font-weight: 700; display: block; margin-bottom: 4px; }
+.rir-step .rir-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); }
+.gauge-note { margin-top: 18px; color: var(--ink-muted); font-size: 13.5px; line-height: 1.7; }
+.gauge-note strong { color: var(--ink); }
+.gauge-note .cite { display: block; margin-top: 10px; font-size: 11.5px; color: var(--ink-dim); font-family: var(--font-mono); }

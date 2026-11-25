@@ -1,0 +1,42 @@
+/* The group accent (follows Push / Pull / Legs), page reset, body text, links, focus ring, scrollbars and the shared fade-in animations. */
+
+/* ===== DYNAMIC GROUP ACCENT (switches with Push / Pull / Legs tab) ===== */
+body { --accent: var(--moss); --accent-bright: var(--moss-bright); --accent-dim: var(--moss-dim); --accent-glow: var(--moss-glow); }
+body[data-group="push"] { --accent: var(--flame); --accent-bright: var(--flame-bright); --accent-dim: var(--flame-dim); --accent-glow: var(--flame-glow); }
+body[data-group="pull"] { --accent: var(--moss); --accent-bright: var(--moss-bright); --accent-dim: var(--moss-dim); --accent-glow: var(--moss-glow); }
+body[data-group="legs"] { --accent: var(--frost); --accent-bright: var(--frost-bright); --accent-dim: var(--frost-dim); --accent-glow: var(--frost-glow); }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  scrollbar-color: var(--ink-dim) var(--bg);
+  scrollbar-width: thin;
+}
+
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent-bright); outline-offset: 3px; border-radius: 4px; }
+::selection { background: var(--accent-glow); color: var(--accent-bright); }
+
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--ink-dim); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes moteDrift { 0% { transform: translateY(0) translateX(0); opacity: 0; } 10% { opacity: 0.7; } 90% { opacity: 0.3; } 100% { transform: translateY(-420px) translateX(20px); opacity: 0; } }
+@keyframes needleSettle { from { transform: rotate(-14deg); } to { transform: rotate(0deg); } }
+
+.animate-fade-up { animation: fadeUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards; }

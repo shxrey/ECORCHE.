@@ -1,0 +1,86 @@
+/* Design tokens: colours, fonts, spacing, radii, shadows and easing. Every other file uses these. */
+
+:root {
+  --bg: #0A0B08;
+  --bg-elevated: #131511;
+  --bg-card: #181A15;
+  --bg-card-hover: #20231C;
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.15);
+  --ink: #F4F5F0;
+  --ink-muted: #969C8C;
+  --ink-dim: #5A6053;
+
+  --moss: #369973;
+  --moss-bright: #6FC9A4;
+  --moss-dim: #1B5745;
+  --moss-glow: rgba(54,153,115,0.16);
+
+  --gold: #E8B23D;
+  --gold-bright: #F5CB6B;
+  --gold-soft: rgba(232,178,61,0.14);
+
+  --violet: #A574E8;
+  --violet-bright: #C39FF2;
+  --violet-soft: rgba(165,116,232,0.14);
+
+  --steel: #4E93E8;
+  --steel-bright: #7CB1F2;
+  --steel-soft: rgba(78,147,232,0.14);
+
+  --ember: #D9722E;
+  --ember-bright: #EFA05D;
+  --ember-soft: rgba(217,114,46,0.15);
+
+  --danger: #F2434A;
+  --danger-bright: #FF6F74;
+  --danger-soft: rgba(242,67,74,0.14);
+
+  --teal: #3FBFA6;
+  --teal-bright: #64D8BE;
+  --teal-soft: rgba(63,191,166,0.14);
+
+  --ham: #A574E8;
+  --ham-bright: #C39FF2;
+  --ham-soft: rgba(165,116,232,0.14);
+
+  --glute: #E85B95;
+  --glute-bright: #F58BB5;
+  --glute-soft: rgba(232,91,149,0.14);
+
+  --calf: #D9782E;
+  --calf-bright: #EFA35D;
+  --calf-soft: rgba(217,120,46,0.15);
+
+  /* PUSH primary accent (renamed from its native "ember" to avoid clashing with PULL's forearm ember) */
+  --flame: #E45228;
+  --flame-bright: #F2734C;
+  --flame-dim: #7A2712;
+  --flame-glow: rgba(228,82,40,0.16);
+
+  /* LEGS primary accent (renamed from its native "iron") */
+  --frost: #5389B4;
+  --frost-bright: #8FB8D9;
+  --frost-dim: #294A63;
+  --frost-glow: rgba(83,137,180,0.16);
+
+  --font-display: var(--nf-anton), 'Arial Narrow', Impact, sans-serif;
+  --font-body: var(--nf-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: var(--nf-jetbrains), 'SF Mono', Consolas, monospace;
+
+  /* ===== DESIGN TOKENS (spacing / radius / shadow / easing scale) =====
+     Applied to the newly added components below (drawer, rest timer, mini-bar,
+     logger, history & standards modals, toasts). Retrofitting every existing
+     hardcoded value across the whole file wasn't worth the regression risk,
+     so older components keep their original numbers. */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px;
+  --space-5: 24px; --space-6: 32px; --space-7: 48px; --space-8: 64px;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px; --radius-xl: 24px; --radius-full: 9999px;
+  --shadow-1: 0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03);
+  --shadow-2: 0 4px 12px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+  --shadow-3: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
+  --ease-out-expo: cubic-bezier(0.16,1,0.3,1);
+  --ease-in-expo: cubic-bezier(0.7,0,0.84,0);
+  --ease-spring: cubic-bezier(0.34,1.56,0.64,1);
+  --ease-smooth: cubic-bezier(0.45,0,0.55,1);
+}

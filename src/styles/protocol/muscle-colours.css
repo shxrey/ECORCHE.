@@ -1,0 +1,47 @@
+/* Muscle colours for the Push and Legs days: tags, activation bars and icons. */
+
+/* ===== PUSH-SPECIFIC (Chest / Front Delt / Triceps / Core) ===== */
+.tag-chest { background: var(--flame-glow); color: var(--flame-bright); }
+.tag-delt { background: var(--gold-soft); color: var(--gold-bright); }
+.tag-tri { background: var(--violet-soft); color: var(--violet-bright); }
+.tag-trap { background: var(--gold-soft); color: var(--gold-bright); }
+.tag-core { background: var(--teal-soft); color: var(--teal-bright); }
+.bar-chest { background: linear-gradient(90deg, var(--flame-dim), var(--flame)); }
+.bar-delt { background: linear-gradient(90deg, #B8862A, var(--gold)); }
+.bar-tri { background: linear-gradient(90deg, #6B4A9C, var(--violet)); }
+.bar-trap { background: linear-gradient(90deg, #B8862A, var(--gold)); }
+.bar-core { background: linear-gradient(90deg, #227A69, var(--teal)); }
+.zone-chest-upper { fill: var(--flame); filter: drop-shadow(0 0 8px rgba(228,82,40,0.5)); }
+.zone-chest-lower { fill: var(--flame-dim); filter: drop-shadow(0 0 7px rgba(122,39,18,0.45)); }
+.zone-delt { fill: var(--gold); filter: drop-shadow(0 0 7px rgba(232,178,61,0.5)); }
+.zone-abs { fill: var(--teal); filter: drop-shadow(0 0 7px rgba(63,191,166,0.45)); }
+.muscle-card.chest::after { background: linear-gradient(90deg, var(--flame-dim), var(--flame)); }
+.muscle-card.delt::after { background: linear-gradient(90deg, #B8862A, var(--gold)); }
+.muscle-card.tri::after { background: linear-gradient(90deg, #6B4A9C, var(--violet)); }
+.muscle-card.core::after { background: linear-gradient(90deg, #227A69, var(--teal)); }
+.muscle-icon.chest { background: var(--flame-glow); }
+.muscle-icon.delt { background: var(--gold-soft); }
+.muscle-icon.tri { background: var(--violet-soft); }
+.muscle-icon.core { background: var(--teal-soft); }
+
+/* ===== LEGS-SPECIFIC (Quads / Hamstrings / Glutes / Calves) ===== */
+.tag-quad { background: var(--frost-glow); color: var(--frost-bright); }
+.tag-ham { background: var(--ham-soft); color: var(--ham-bright); }
+.tag-glute { background: var(--glute-soft); color: var(--glute-bright); }
+.tag-calf { background: var(--calf-soft); color: var(--calf-bright); }
+.bar-quad { background: linear-gradient(90deg, var(--frost-dim), var(--frost)); }
+.bar-ham { background: linear-gradient(90deg, #6B4A9C, var(--ham)); }
+.bar-glute { background: linear-gradient(90deg, #A63862, var(--glute)); }
+.bar-calf { background: linear-gradient(90deg, #8F4F1D, var(--calf)); }
+.zone-quad { fill: var(--frost); filter: drop-shadow(0 0 8px rgba(83,137,180,0.5)); }
+.zone-ham { fill: var(--ham); filter: drop-shadow(0 0 7px rgba(165,116,232,0.45)); }
+.zone-glute { fill: var(--glute); filter: drop-shadow(0 0 7px rgba(232,91,149,0.45)); }
+.zone-calf { fill: var(--calf); filter: drop-shadow(0 0 7px rgba(217,120,46,0.45)); }
+.muscle-card.quad::after { background: linear-gradient(90deg, var(--frost-dim), var(--frost)); }
+.muscle-card.ham::after { background: linear-gradient(90deg, #6B4A9C, var(--ham)); }
+.muscle-card.glute::after { background: linear-gradient(90deg, #A63862, var(--glute)); }
+.muscle-card.calf::after { background: linear-gradient(90deg, #8F4F1D, var(--calf)); }
+.muscle-icon.quad { background: var(--frost-glow); }
+.muscle-icon.ham { background: var(--ham-soft); }
+.muscle-icon.glute { background: var(--glute-soft); }
+.muscle-icon.calf { background: var(--calf-soft); }

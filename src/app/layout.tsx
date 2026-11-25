@@ -7,7 +7,7 @@ import '@/styles/overrides.css';
 import { SITE_URL } from '@/lib/site';
 
 // Self-hosted at build time (no Google Fonts request, no layout shift).
-// protocol.css reads these through --font-display / --font-body / --font-mono.
+// src/styles/protocol/tokens.css reads these through --font-display / --font-body / --font-mono.
 const anton = Anton({ weight: '400', subsets: ['latin'], variable: '--nf-anton', display: 'swap' });
 const inter = Inter({
   weight: ['300', '400', '500', '600', '700', '800', '900'],

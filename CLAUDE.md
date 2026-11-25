@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-ÉCORCHÉ (https://ecorche.app): a 6-day Push/Pull/Legs hypertrophy tracker. Next.js 16 (App Router, TypeScript), Supabase (Postgres + Auth + RLS), Resend for sign-in email, deployed on Vercel. Every push to `main` on github.com/shxrey/ECORCHE. (formerly blueprint-ppl) auto-deploys to production. The legacy code is being replaced in phases: see `docs/react-rebuild-plan.md` before starting that work. Nightly encrypted database backups: `docs/backups.md`.
+ÉCORCHÉ (https://ecorche.app): a 6-day Push/Pull/Legs hypertrophy tracker. Next.js 16 (App Router, TypeScript), Supabase (Postgres + Auth + RLS), Resend for sign-in email, deployed on Vercel. Every push to `main` on github.com/shxrey/ECORCHE. (formerly blueprint-ppl) auto-deploys to production. The page was rebuilt in React in phases, keeping the original's look, markup and saved data (`docs/react-rebuild-plan.md`; Phase 5 is optional). Nightly encrypted database backups: `docs/backups.md`.
 
 ## Commands
 
@@ -14,8 +14,8 @@ npm run typecheck       # next typegen && tsc --noEmit
 npm run test:db         # applies every migration to in-memory Postgres (PGlite), tests RLS + sync_push/sync_pull
 npm run test:unit       # node:test via tsx, every src/**/*.test.ts: sync engine, training rules and store, auth helpers
 npm run test:e2e        # Playwright (e2e/): builds, serves on 127.0.0.1:3100, always signed out; tests "/". BACKUP_DIR=<folder> also imports those backup files through the page (never commit them)
-npm run extract:legacy  # regenerates the legacy-derived files (see below)
-npm run verify:legacy   # proves the workout and every ported section render the same DOM as the original
+npm run extract:program # regenerates src/content/program.ts from reference/protocol.html (see below)
+npm run verify:legacy   # proves every section and the workout render the same DOM as the original page
 npm run test:visual     # pixel comparison against an older build you serve yourself; steps in docs/react-rebuild-plan.md
 ```
 
@@ -23,25 +23,19 @@ To run one test file: `npx tsx --test src/lib/sync/sync.test.ts`. To run one cas
 
 Without `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local`, the app runs local-only (localStorage) and hides account features (`src/lib/supabase/config.ts`). Both values are public. Never add a service_role/secret key to this app.
 
-## Architecture: a strangler-pattern port
+## Architecture
 
-The app began as one 450 KB HTML file (`reference/protocol.html`, frozen). It still runs mostly as that original vanilla-JS app inside a Next.js shell, and sections move into React one at a time.
+The app began as one 450 KB HTML file (`reference/protocol.html`, frozen). It has been rebuilt in React with the same markup, styles and saved-data formats; nothing from the original script runs any more.
 
-**Generated files: change the generator, not the output.** `scripts/extract-legacy.mjs` reads `reference/protocol.html` and writes:
-- `src/styles/protocol.css`: the original styles. Fonts now come from `next/font`, and the hand-written `-webkit-backdrop-filter` lines are removed.
-- `src/content/program.ts`: the 6 days and 46 exercises as typed data (types in `src/content/types.ts`).
-- `src/legacy/fragments.ts`: the sections not yet ported (the tracker and the pop-ups) as raw HTML strings, rendered by `LegacyFragment`.
-- `public/legacy/protocol.js`: the original `<script>` logic, plus a bootstrap and the sync bridge.
+**Generated file: change the generator, not the output.** `scripts/extract-program.mjs` (`npm run extract:program`) reads the workout in `reference/protocol.html` and writes `src/content/program.ts`: the 6 days and 46 exercises as typed data (types in `src/content/types.ts`). If you hand-edit it, the next extract silently overwrites it. `program.ts` has never been hand-edited since the first port. Check with the user before treating it as hand-maintained.
 
-The sections' original HTML comes from `scripts/legacy-fragments.mjs`, shared with `verify:legacy`. Its `PORTED` list names the sections now in React (`src/components/sections/` and `src/components/shell/`, content in `src/content/`): they're left out of `fragments.ts` but still checked against the original. To port another: write the component, add it to `PORTED` and to `SECTIONS` in `scripts/verify-legacy.tsx`, and remove its old script code with a `cuts` entry in the extractor.
+**Checked against the original:** `verify:legacy` renders each section's component and the workout to HTML and compares them node by node with the original page (`scripts/legacy-fragments.mjs` holds its sections, with the rebrand edits). Markup changes only when the user asks (the redesign will); update the check with them.
 
-To change legacy behaviour or markup, add a string-replacement entry to the extractor's `patches` array (each one throws if its target text is missing), or a `cuts` entry to delete code between two markers, or edit the snippet files it splices in (`scripts/legacy-bridge.js`, `legacy-units.js`, `legacy-labels.js`). Then run `extract:legacy` and commit the regenerated files with the change. If you hand-edit a generated file, the next extract silently overwrites it. `program.ts` has never been hand-edited since the first port. Check with the user before treating it as hand-maintained.
+**Styles** (`src/styles/`): `protocol.css` imports the original stylesheet split by part of the page (`src/styles/protocol/*.css`) in the original order. Later rules win ties, so keep that order and put a rule in its part's file. `overrides.css` loads after them (fixes and additions since the port). `auth.css` and `legal.css` style the account, sign-in and legal pages.
 
-**Runtime wiring** (`src/app/page.tsx`): `LegacyFragment` sections, the React sections and `Workout` (`src/components/workout/`) render on the server. The page shell is React (`src/components/shell/`): `TopNav` and its phone menu, `Hero`, the `SessionMinibar` markup, and `PageEffects` (colour theme, address, scroll reveal in `reveal.ts`, smooth in-page scrolling). Which group and day is showing lives in the view store (`src/lib/view.ts`), which keeps the `#legsA` address in step. The interactive pieces are client components; they render exactly the original markup first (`useHydrated`), and never change the class of an element that fades in on scroll (it gets `visible`) or of `.top-nav` / `.hero` (Workout Mode adds classes to them).
+**Runtime wiring** (`src/app/page.tsx`): the shell is `src/components/shell/` (`TopNav` and its phone menu, `Hero`, `PageEffects`: colour theme, address, scroll reveal in `reveal.ts`, smooth in-page scrolling), the reading sections are `src/components/sections/` (content in `src/content/`), and the tracker, workout, session bar, timers and pop-ups are `src/components/training/` and `src/components/overlays/`. Those run on the training store (`src/lib/training/client.ts`: `trainingStore()`, `useTraining(select)`), which keeps the original app's localStorage keys and formats. Which group and day is showing lives in the view store (`src/lib/view.ts`), which keeps the `#legsA` address in step. Client components render exactly the original markup first (`useHydrated`). The scroll reveal and Workout Mode mark elements with data attributes (`data-revealed`, `data-kiosk`, styled in `overrides.css`), so a component may rewrite its element's classes. Links between pages are `DocumentLink` (full page loads). `/preview`, where the rebuild was tried first, is a temporary redirect to `/`.
 
-**The page runs on the training store** (since the switch-over on 25 Nov 2026): the tracker, workout, session bar, timers and pop-ups are React components (`src/components/training/`, `src/components/overlays/`) reading `src/lib/training/client.ts` (`trainingStore()`, `useTraining(select)`). It keeps the old script's localStorage keys and formats, so data saved before the switch reads as it was. Sync is `<CloudSync source="store" />`. The server HTML is still checked against the original by `verify:legacy`. `/preview`, where the core was tried out first, is a temporary redirect to `/` (`next.config.ts`). The old script (`public/legacy/protocol.js`, `LegacyRuntime`, `LegacyFragment`, the bridge, `SessionMinibar`, `components/workout/Workout`) no longer loads anywhere and goes in Phase 4; never load it on a page with the store, as two writers would clobber each other's saves.
-
-**Cloud sync** (`src/lib/sync`, `src/components/sync/CloudSync.tsx`): offline-first. The training store holds the state (`doneMap`, `logMap`, `notesMap`, `sessionsMap`, timers, prefs) in localStorage; `adapters.trainingStoreBridge` connects sync to it (`readState`/`applyState`, and the lifter's own changes are announced, not what sync applies). (Before the switch-over, `scripts/legacy-bridge.js` did this for the old script as `window.__legacyBridge`; it goes in Phase 4.) `model.ts` flattens state into keyed records (`c|`, `l|`, `n|`, `d|`, `t|`, `s`; mapping documented at its top). `engine.ts` diffs records against a shadow copy and queues them in an outbox (localStorage `hb_sync_v1`). It syncs through the Postgres RPCs `sync_push`/`sync_pull`, which resolve conflicts last-write-wins per record on the server, with tombstones for deletes. The engine takes injected bridge/remote/store interfaces (`adapters.ts`), so `sync.test.ts` can simulate two devices without a browser.
+**Cloud sync** (`src/lib/sync`, `src/components/sync/CloudSync.tsx`): offline-first. The training store holds the state (`doneMap`, `logMap`, `notesMap`, `sessionsMap`, timers, prefs) in localStorage; `adapters.trainingStoreBridge` connects sync to it (`readState`/`applyState`, and the lifter's own changes are announced, not what sync applies). `model.ts` flattens state into keyed records (`c|`, `l|`, `n|`, `d|`, `t|`, `s`; mapping documented at its top). `engine.ts` diffs records against a shadow copy and queues them in an outbox (localStorage `hb_sync_v1`). It syncs through the Postgres RPCs `sync_push`/`sync_pull`, which resolve conflicts last-write-wins per record on the server, with tombstones for deletes. The engine takes injected bridge/remote/store interfaces (`adapters.ts`), so `sync.test.ts` can simulate two devices without a browser.
 
 **Training rules and store** (`src/lib/training/`): the old script's calculations as pure typed modules (e1RM, ▲/▼, PRs, history lookups, warm-ups, progress, volume, CSV, backups) and `TrainingStore`, which reads and writes the same localStorage keys and formats as the old app. Before the switch-over they were checked against the running old page (`e2e/parity.spec.ts`, now deleted); where they differ on purpose (bug fixes), `docs/react-rebuild-plan.md` says so. `e2e/saved-data.spec.ts` checks the page against them on random histories.
 
@@ -49,11 +43,10 @@ To change legacy behaviour or markup, add a string-replacement entry to the extr
 
 **Database**: migrations in `supabase/migrations/` (0001 onward) are applied to prod by hand in the Supabase SQL Editor, in order. `test:db` replays them the same way (0001 with existing data, then the rest) and grants nothing outside the migrations. Every new table or function needs its grants and RLS policies in its own migration.
 
-**Security headers/CSP** are in `next.config.ts`. `connect-src` allows only self plus the Supabase URL (https and wss). Inline scripts stay allowed because legacy markup uses inline handlers.
+**Security headers/CSP** are in `next.config.ts`. `connect-src` allows only self plus the Supabase URL (https and wss). Inline event handlers are blocked (`script-src-attr 'none'`), so handle events in React, never through `on…=` attributes or HTML strings (`e2e/security.spec.ts`). Inline `<script>` elements stay allowed: Next.js inlines each page's data, and a nonce instead would render every page per request.
 
 ## Invariants
 
 - Exercise keys (`push-a1` … `legs-b7`), set indices, and local-timezone `YYYY-MM-DD` date keys are storage keys. Saved logs, synced rows and old JSON backups depend on them, so never rename them. Saved weights are always kg. The kg/lb setting only changes display.
 - Keep the original visual design (Anton / Inter / JetBrains Mono, neon Flame/Moss/Frost glows, long-scroll layout) unless the user asks for a redesign. Don't restyle with Tailwind or generic component libraries.
 - Program content (cues, MVIC %, citations) lives in repo content files. The database holds only per-user data.
-- `public/legacy/**` and the extractor snippet files are excluded from ESLint on purpose: their functions are called from inline handlers.

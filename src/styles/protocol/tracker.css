@@ -1,0 +1,69 @@
+/* The weekly tracker: settings row, Auto-Rest switch, week ring, day cards and data buttons (src/components/training/Tracker.tsx). */
+
+/* ===== MASTER WEEKLY TRACKER ===== */
+.tracker-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px; margin-bottom: 28px; contain: layout style paint; }
+
+/* ===== AUTO-REST TOGGLE ===== */
+.tracker-settings-row { display: flex; justify-content: flex-end; margin-bottom: 24px; }
+.auto-rest-toggle { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+.auto-rest-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.auto-rest-switch {
+  position: relative; width: 40px; height: 24px; border-radius: var(--radius-full);
+  background: var(--bg-elevated); border: 1px solid var(--border-strong);
+  transition: background 0.2s ease, border-color 0.2s ease; flex-shrink: 0;
+}
+.auto-rest-switch::before {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--ink-dim);
+  transition: transform 0.2s var(--ease-spring), background 0.2s ease;
+}
+.auto-rest-toggle input:checked + .auto-rest-switch { background: var(--accent-glow); border-color: var(--accent); }
+.auto-rest-toggle input:checked + .auto-rest-switch::before { transform: translateX(16px); background: var(--accent-bright); }
+.auto-rest-toggle input:focus-visible + .auto-rest-switch { outline: 2px solid var(--accent); outline-offset: 2px; }
+.auto-rest-label { display: flex; flex-direction: column; gap: 2px; }
+.auto-rest-label .arl-title { font-size: 13px; font-weight: 700; color: var(--ink); }
+.auto-rest-label .arl-sub { font-size: 11.5px; color: var(--ink-dim); }
+@media (max-width: 640px) {
+  .tracker-settings-row { justify-content: flex-start; }
+  .auto-rest-label .arl-sub { display: none; }
+}
+
+.tracker-day-card.active-day { border-color: var(--accent); }
+/* Was animating box-shadow directly — box-shadow isn't a compositable
+   property, so the browser had to fully repaint this element every frame,
+   forever (this class is applied to the current day from page load
+   onward, so it was never actually idle). The ring is now a static
+   box-shadow baked onto a pseudo-element, and only its opacity animates —
+   opacity IS compositable, so this runs on the GPU with zero repaints
+   after the first paint. */
+.tracker-day-card.active-day::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  box-shadow: 0 0 0 6px var(--accent-glow); pointer-events: none;
+  opacity: 0; animation: activeDayPulse 2.2s ease-in-out infinite;
+}
+@keyframes activeDayPulse { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+.tracker-top { display: flex; align-items: center; gap: 32px; flex-wrap: wrap; margin-bottom: 32px; }
+.tracker-ring-wrap { position: relative; width: 128px; height: 128px; flex-shrink: 0; }
+.tracker-ring-wrap svg { width: 128px; height: 128px; transform: rotate(-90deg); }
+.tracker-ring-bg { fill: none; stroke: var(--bg-elevated); stroke-width: 10; }
+.tracker-ring-fill { fill: none; stroke: url(#trackerGradient); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.5s cubic-bezier(0.22,1,0.36,1); }
+.tracker-ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.tracker-ring-text .big { font-family: var(--font-display); font-size: 28px; color: var(--ink); line-height: 1; }
+.tracker-ring-text .small { font-size: 10px; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+.tracker-info { flex: 1; min-width: 220px; }
+.tracker-info h5 { font-size: 16px; font-weight: 800; color: var(--ink); margin-bottom: 6px; }
+.tracker-info p { font-size: 13px; color: var(--ink-muted); line-height: 1.6; max-width: 480px; }
+.mesocycle-banner { margin: 12px 0 20px; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--ink-muted); font-family: var(--font-mono); }
+.mesocycle-banner.deload { background: var(--flame-dim); border-color: var(--flame); color: var(--ink); }
+.mesocycle-banner:empty { display: none; }
+.tracker-week-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.tracker-day-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer; transition: all 0.25s ease; text-align: left; position: relative; }
+.tracker-day-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+.tracker-day-card.complete { border-color: rgba(54,153,115,0.4); background: linear-gradient(160deg, rgba(54,153,115,0.08), var(--bg-elevated) 60%); }
+.tracker-day-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em; color: var(--ink-dim); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+.tracker-day-label .dot { width: 8px; height: 8px; border-radius: 50%; }
+.tracker-day-name { font-size: 14.5px; font-weight: 700; color: var(--ink); margin-bottom: 10px; }
+.tracker-day-bar { height: 6px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+.tracker-day-bar-fill { height: 100%; width: 100%; border-radius: 4px; transition: transform 0.6s ease; transform: scaleX(0); transform-origin: left; }
+.tracker-day-count { font-family: var(--font-mono); font-size: 11px; color: var(--ink-muted); }
+.tracker-reset-all { margin-top: 24px; text-align: right; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }

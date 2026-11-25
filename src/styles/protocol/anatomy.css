@@ -1,0 +1,68 @@
+/* The anatomy section: muscle diagrams, the biceps-head panel and comparison tables (src/components/sections/Anatomy.tsx). */
+
+/* ===== ANATOMY SECTION ===== */
+.anatomy-section { background: linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg) 100%); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+.silhouette-panel { display: grid; grid-template-columns: 300px 1fr; gap: 48px; align-items: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 24px; padding: 40px; margin-bottom: 56px; }
+@media (max-width: 800px) { .silhouette-panel { grid-template-columns: 1fr; } }
+.silhouette-svg { width: 100%; }
+.sil-base { fill: var(--bg-elevated); stroke: var(--border-strong); stroke-width: 2; }
+.sil-zone { opacity: 0.82; transition: opacity 0.3s; }
+.zone-lats { fill: var(--moss); filter: drop-shadow(0 0 8px rgba(54,153,115,0.5)); }
+.zone-traps { fill: var(--gold); filter: drop-shadow(0 0 7px rgba(232,178,61,0.45)); }
+.zone-reardelt { fill: var(--violet); filter: drop-shadow(0 0 7px rgba(165,116,232,0.5)); }
+.zone-bicep { fill: var(--steel); filter: drop-shadow(0 0 6px rgba(78,147,232,0.5)); }
+.zone-forearm { fill: var(--ember); filter: drop-shadow(0 0 6px rgba(217,114,46,0.45)); }
+.zone-line { stroke: var(--gold-bright); stroke-width: 2; opacity: 0.5; }
+
+.silhouette-legend { display: flex; flex-direction: column; gap: 16px; }
+.legend-row { display: flex; gap: 12px; align-items: flex-start; }
+.legend-dot { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; margin-top: 3px; }
+.legend-row h5 { font-size: 14.5px; font-weight: 700; color: var(--ink); margin-bottom: 3px; }
+.legend-row p { font-size: 12.5px; color: var(--ink-muted); line-height: 1.6; }
+.legend-row .pct-tag { font-family: var(--font-mono); font-size: 11px; color: var(--ink-dim); margin-left: 6px; }
+
+.muscle-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.muscle-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 20px; padding: 32px; transition: all 0.3s ease; position: relative; overflow: hidden; }
+.muscle-card::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 4px; border-radius: 0 0 20px 20px; opacity: 0; transition: opacity 0.3s; }
+.muscle-card:hover { transform: translateY(-4px); border-color: var(--border-strong); }
+.muscle-card:hover::after { opacity: 1; }
+.muscle-card.lat::after { background: linear-gradient(90deg, var(--moss-dim), var(--moss)); }
+.muscle-card.midback::after { background: linear-gradient(90deg, #B8862A, var(--gold)); }
+.muscle-card.reardelt::after { background: linear-gradient(90deg, #6B4A9C, var(--violet)); }
+.muscle-card.bicep::after { background: linear-gradient(90deg, #2C5FA0, var(--steel)); }
+.muscle-card.forearm::after { background: linear-gradient(90deg, #9C5320, var(--ember)); }
+
+.muscle-card-header { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+.muscle-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.muscle-icon.lat { background: var(--moss-glow); }
+.muscle-icon.midback { background: var(--gold-soft); }
+.muscle-icon.reardelt { background: var(--violet-soft); }
+.muscle-icon.bicep { background: var(--steel-soft); }
+.muscle-icon.forearm { background: var(--ember-soft); }
+.muscle-card h3 { font-size: 20px; font-weight: 800; color: var(--ink); }
+.muscle-card .latin { font-family: var(--font-mono); font-size: 12px; color: var(--ink-dim); font-style: italic; }
+.muscle-stat-row { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.muscle-stat-row:last-child { border-bottom: none; }
+.muscle-stat-label { color: var(--ink-muted); font-size: 12.5px; flex-shrink: 0; }
+.muscle-stat-value { font-weight: 700; color: var(--ink); font-size: 12.5px; text-align: right; }
+
+/* ===== BICEPS HEAD DIAGRAM ===== */
+.tri-head-panel { display: grid; grid-template-columns: 200px 1fr; gap: 28px; align-items: center; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); }
+@media (max-width: 600px) { .tri-head-panel { grid-template-columns: 1fr; } }
+.tri-head-svg { width: 100%; }
+.head-long { fill: var(--steel); opacity: 0.85; }
+.head-lateral { fill: var(--steel-bright); opacity: 0.7; }
+.head-medial { fill: #3E76BF; opacity: 0.9; }
+.tri-legend-row { display: flex; gap: 10px; align-items: baseline; font-size: 12.5px; color: var(--ink-muted); margin-bottom: 8px; }
+.tri-legend-row strong { color: var(--ink); min-width: 90px; display: inline-block; }
+
+/* ===== COMPARISON TABLE ===== */
+.comparison-table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; }
+.comparison-table th, .comparison-table td { padding: 14px 18px; text-align: left; font-size: 13px; border-bottom: 1px solid var(--border); }
+.comparison-table th { color: var(--ink-dim); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; background: var(--bg-elevated); }
+.comparison-table th:first-child { border-radius: 10px 0 0 0; }
+.comparison-table th:last-child { border-radius: 0 10px 0 0; }
+.comparison-table td { color: var(--ink-muted); }
+.comparison-table tr:hover td { color: var(--ink); background: rgba(255,255,255,0.02); }
+.comparison-table td:first-child { font-weight: 600; color: var(--ink); }
