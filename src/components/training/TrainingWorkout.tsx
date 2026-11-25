@@ -3,13 +3,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { askToConfirm, showToast } from '@/components/overlays/feedback';
 import { reveal } from '@/components/shell/reveal';
+import { displayName } from '@/content/names';
 import { days, exerciseByKey } from '@/content/program';
 import type { Day } from '@/content/types';
 import { trainingStore, useTraining } from '@/lib/training/client';
-import { dayProgress } from '@/lib/training/progress';
+import { dayProgress, setKey } from '@/lib/training/progress';
 import { useHydrated } from '@/lib/useHydrated';
 import { useView } from '@/lib/view';
 import { TrainingExerciseCard } from './TrainingExerciseCard';
+import { inWorkoutMode, subscribeWorkoutMode, toggleWorkoutMode, useWorkoutMode } from './workout';
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 24;
 
@@ -26,8 +28,9 @@ export function TrainingWorkout() {
 
 /**
  * One training day: header, progress ring, Reset Day (asks first, then
- * offers Undo), and its exercise cards, one open at a time. Same markup as
- * the original page; it shows the server's Legs A until the page is live.
+ * offers Undo), Start / Finish Workout, and its exercise cards, one open at a
+ * time. Same markup as the original page; it shows the server's Legs A until
+ * the page is live.
  */
 function TrainingDay({ day }: { day: Day }) {
   const hydrated = useHydrated();
@@ -36,6 +39,7 @@ function TrainingDay({ day }: { day: Day }) {
   const doneMap = useTraining((s) => s.doneMap);
   const progress = useMemo(() => dayProgress(doneMap, day.id), [doneMap, day.id]);
   const [openCard, setOpenCard] = useState<string | null>(null);
+  const workoutMode = useWorkoutMode();
   const root = useRef<HTMLDivElement>(null);
   const cap = day.id.charAt(0).toUpperCase() + day.id.slice(1); // "pushA" -> "PushA"
   const label = `${day.title} ${day.letter}`;
@@ -57,6 +61,17 @@ function TrainingDay({ day }: { day: Day }) {
     }, 40);
     return () => clearTimeout(t);
   }, [hydrated, shown]);
+
+  // Starting Workout Mode folds away an open exercise that's already finished.
+  useEffect(
+    () =>
+      subscribeWorkoutMode(() => {
+        if (!inWorkoutMode()) return;
+        const done = trainingStore().getState().doneMap;
+        setOpenCard((open) => (open && exerciseByKey[open].setDots.every((dot) => done[setKey(open, dot.idx)]) ? null : open));
+      }),
+    [],
+  );
 
   const resetDay = () =>
     askToConfirm('Reset all logged sets for this day? This can be undone for a few seconds after.', () => {
@@ -99,18 +114,28 @@ function TrainingDay({ day }: { day: Day }) {
           <button className="reset-btn" onClick={resetDay}>
             {day.resetLabel}
           </button>
+          {hydrated ? (
+            <button type="button" className="progress-kiosk-btn" onClick={toggleWorkoutMode}>
+              {workoutMode ? 'Finish Workout' : 'Start Workout'}
+            </button>
+          ) : null}
         </div>
 
         <div className="exercise-list">
-          {day.exerciseKeys.map((key) => (
-            <TrainingExerciseCard
-              key={key}
-              exercise={exerciseByKey[key]}
-              dayId={day.id}
-              expanded={openCard === key}
-              onToggle={() => setOpenCard((open) => (open === key ? null : key))}
-            />
-          ))}
+          {day.exerciseKeys.map((key, i) => {
+            const next = day.exerciseKeys[i + 1];
+            return (
+              <TrainingExerciseCard
+                key={key}
+                exercise={exerciseByKey[key]}
+                dayId={day.id}
+                nextName={next ? displayName(exerciseByKey[next]) : null}
+                expanded={openCard === key}
+                onToggle={() => setOpenCard((open) => (open === key ? null : key))}
+                onClose={() => setOpenCard((open) => (open === key ? null : open))}
+              />
+            );
+          })}
         </div>
       </section>
     </div>

@@ -53,6 +53,37 @@ export function useToday(): string {
   return useSyncExternalStore(subscribeToClock, () => dateKey(), () => '');
 }
 
+// A second-ticker for running clocks, only while something is counting.
+const secondListeners = new Set<() => void>();
+let secondTimer: ReturnType<typeof setInterval> | null = null;
+let lastSecond = 0;
+const subscribeToSeconds = (listener: () => void) => {
+  secondListeners.add(listener);
+  secondTimer ??= setInterval(() => {
+    lastSecond = Date.now();
+    secondListeners.forEach((l) => l());
+  }, 1000);
+  return () => {
+    secondListeners.delete(listener);
+    if (!secondListeners.size && secondTimer) {
+      clearInterval(secondTimer);
+      secondTimer = null;
+    }
+  };
+};
+const noClock = () => () => {};
+/** The time now, as of the latest whole-second tick (so it holds still between ticks). */
+const readSecond = () => {
+  const now = Date.now();
+  if (now - lastSecond >= 1000) lastSecond = now;
+  return lastSecond;
+};
+
+/** The current time (ms), updated every second while `running`; 0 in the server HTML. */
+export function useSecondClock(running: boolean): number {
+  return useSyncExternalStore(running ? subscribeToSeconds : noClock, readSecond, () => 0);
+}
+
 /** A piece of the training state; re-renders only when that piece changes. */
 export function useTraining<T>(select: (state: TrainingState) => T): T {
   return useSyncExternalStore(

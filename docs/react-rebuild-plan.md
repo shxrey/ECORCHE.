@@ -166,9 +166,9 @@ you're happy, `/` switches over.
     histories show right, and each page reads exactly what the other saved), and the pixel
     check's "preview" project (identical to the live page, except the session bar's "00:00"
     timer, which comes with 3c).
-  - Waiting on later steps, so they do nothing on `/preview` yet: the log boxes (3b), the rest
-    timer, tempo pacer, Workout Mode and the session timer (3c), and View History, Export,
-    Import and Auto-Backup (3d).
+  - Waiting on later steps, so they did nothing on `/preview` at first: the log boxes (3b),
+    the rest timer, tempo pacer, Workout Mode and the session timer (3c), and View History,
+    Export, Import and Auto-Backup (3d).
 - [x] **3b. Logging:** weight, reps and RIR boxes; suggestions; dated notes; "Last session";
       e1RM; trend bars; ▲/▼ badges; PRs and confetti; warm-up; kg/lb; screen-reader names.
   - Fix: only the set you actually confirm is saved, not the suggested numbers in the
@@ -185,9 +185,25 @@ you're happy, `/` switches over.
     at 375px, only "hold" by 4px at 390px). `e2e/cards.ts` (shared with `parity.spec.ts`)
     checks every card's boxes, lines and badges on `/preview` against the modules on random
     histories. Pixel check: an open card with history is identical to the live page's.
-- [ ] **3c. Timers and Workout Mode:** rest timer, auto-rest and voice cues; session timer
+- [x] **3c. Timers and Workout Mode:** rest timer, auto-rest and voice cues; session timer
       (synced); tempo pacer; the mini-bar; Workout Mode, swiping days, keeping the screen awake;
       high contrast.
+  - Done 25 Nov. `src/components/training/workout.ts` holds the rest timer (counted from its
+    end time, so a throttled background tab stays right; the chime's audio is unlocked in the
+    tap), the tempo pacer (3 s down, 1 s hold, explosive up; stops when the tab is left) and
+    Workout Mode, as small shared stores (`src/lib/signal.ts`, now also used by the pop-ups).
+    `voice.ts` speaks the cues with an on-device English voice when there is one.
+    `WorkoutRuntime` does the page-wide part: fading the rest of the page, scrolling to the
+    day, swiping Day A/B, the screen wake lock, catching the timer up on return. The mini-bar
+    shows the workout timer (`useSecondClock`, ticking only while one runs) and "1:30 rest".
+  - Workout Mode marks what it hides with a `data-kiosk` attribute (same steps as the old
+    classes, in `overrides.css`), so React can't undo it by redrawing a class.
+  - Small differences: the mini-bar's "rest" countdown shows at once and follows ±15 (the old
+    page waited for the next tick), and leaving `/preview` by an in-app link stops the
+    pacer, the timer and Workout Mode.
+  - New tests on both pages: ±15, dismiss and the mini-bar countdown; Workout Mode hiding and
+    restoring the page; Escape closing a dialog before leaving Workout Mode; the "Next:" line
+    and a finished card folding away. The pixel check's session bar now matches too.
 - [ ] **3d. Data tools:** history, export and import (same file format), CSV, auto-backup,
       confirm dialogs and toasts.
   - Fix: on Sundays, View History counts that day's sets in this week.

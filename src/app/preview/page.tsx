@@ -17,6 +17,7 @@ import { Tracker } from '@/components/training/Tracker';
 import { TrainingMinibar } from '@/components/training/TrainingMinibar';
 import { TrainingRuntime } from '@/components/training/TrainingRuntime';
 import { TrainingWorkout } from '@/components/training/TrainingWorkout';
+import { WorkoutRuntime } from '@/components/training/WorkoutRuntime';
 
 // Hidden: not in the sitemap, not crawled (robots.ts), not indexed.
 export const metadata: Metadata = {
@@ -31,8 +32,7 @@ export const metadata: Metadata = {
  * the workout and the session bar run on the training store here, and the old
  * script doesn't load at all, so the two never write the data at once.
  *
- * Still to come: logging (3b), timers and Workout Mode (3c), history, export
- * and import (3d).
+ * Still to come: history, export and import (3d).
  */
 export default function Preview() {
   return (
@@ -55,6 +55,7 @@ export default function Preview() {
       </div>
       <PageEffects />
       <TrainingRuntime />
+      <WorkoutRuntime />
       <AccountNav />
       <CloudSync source="store" />
     </>

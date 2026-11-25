@@ -64,3 +64,10 @@
 /* Phones: a long ▲/▼ badge ("▲ +2.5kg ready") wraps under the boxes instead of
    running off the card and being cut off (rebuilt training core only). */
 .set-log-panel[data-rebuilt] .set-log-row { flex-wrap: wrap; }
+
+/* Workout Mode's fade (src/components/training/WorkoutRuntime.tsx): the same
+   steps as .kiosk-fade / .kiosk-hidden-fade / .kiosk-collapsed, on an
+   attribute React never rewrites (rebuilt training core only). */
+[data-kiosk] { transition: opacity 0.35s var(--ease-smooth); }
+[data-kiosk][data-kiosk~='hidden'] { opacity: 0; pointer-events: none; }
+[data-kiosk][data-kiosk~='collapsed'] { display: none !important; }

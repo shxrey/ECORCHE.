@@ -2,20 +2,22 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { days } from '@/content/program';
-import { trainingStore, useTraining } from '@/lib/training/client';
+import { trainingStore, useSecondClock, useTraining } from '@/lib/training/client';
 import { dayProgress } from '@/lib/training/progress';
 import { useHydrated } from '@/lib/useHydrated';
 import { useView } from '@/lib/view';
+import { hush } from './voice';
+import { formatClock, formatElapsed, toggleTempo, toggleWorkoutMode, useRest, useTempo, useWorkoutMode } from './workout';
 
 const RING_CIRCUMFERENCE = 2 * Math.PI * 12;
 const ICON = { width: 16, height: 16, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
 
 /**
- * The sticky session bar in the rebuilt training core: the shown day's name
- * and progress, shown once the hero scrolls out of view, plus the voice-cue
- * and high-contrast switches. The rest countdown, tempo pacer and Workout
- * Mode arrive in Phase 3c, so those buttons do nothing yet. Same markup as
- * the original page until it's live.
+ * The sticky session bar in the rebuilt training core: the shown day's name,
+ * progress and workout timer, the rest countdown, and the switches for voice
+ * cues, high contrast, the tempo pacer and Workout Mode. Shown once the hero
+ * scrolls out of view, and always in Workout Mode. Same markup as the
+ * original page until it's live.
  */
 export function TrainingMinibar() {
   const hydrated = useHydrated();
@@ -23,7 +25,14 @@ export function TrainingMinibar() {
   const doneMap = useTraining((s) => s.doneMap);
   const audio = useTraining((s) => s.prefs.audio);
   const highContrast = useTraining((s) => s.prefs.highContrast);
+  const timers = useTraining((s) => s.timers);
+  const rest = useRest();
+  const tempo = useTempo();
+  const workoutMode = useWorkoutMode();
   const dayId = `${view.group}${view.day}`;
+  // The workout timer runs from the day's first ticked set until Reset.
+  const startedAt = timers[dayId];
+  const now = useSecondClock(!!startedAt);
   const day = days.find((d) => d.id === dayId)!;
   const progress = useMemo(() => dayProgress(doneMap, dayId), [doneMap, dayId]);
   const fraction = progress.total ? progress.done / progress.total : 0;
@@ -42,17 +51,22 @@ export function TrainingMinibar() {
     const next = !audio;
     trainingStore().setPrefs({ audio: next });
     // Stop anything mid-sentence the moment voice cues are muted.
-    if (!next && window.speechSynthesis) window.speechSynthesis.cancel();
+    if (!next) hush();
   };
 
   return (
-    <div className={heroGone ? 'session-minibar visible' : 'session-minibar'} id="sessionMinibar">
+    <div className={heroGone || workoutMode ? 'session-minibar visible' : 'session-minibar'} id="sessionMinibar">
       <span className="mb-day" id="mbDay">
         {day.title} {day.letter}
       </span>{' '}
       <span className="mb-progress" id="mbProgress">
         {progress.done}/{progress.total} sets
       </span>
+      {hydrated ? (
+        <span id="mbSessionTimer" style={{ color: 'var(--accent-bright)', fontFamily: 'var(--font-mono)', fontWeight: 700, marginLeft: '8px' }}>
+          {startedAt ? formatElapsed(now - startedAt) : '00:00'}
+        </span>
+      ) : null}
       <div className="mb-progress-ring" aria-hidden="true">
         <svg width="30" height="30" viewBox="0 0 30 30">
           <circle className="mb-ring-track" cx="15" cy="15" r="12" />
@@ -71,7 +85,9 @@ export function TrainingMinibar() {
           {Math.round(fraction * 100)}%
         </span>
       </div>
-      <span className="mb-rest" id="mbRest" />
+      <span className="mb-rest" id="mbRest">
+        {rest.visible ? `${formatClock(rest.remaining)} rest` : null}
+      </span>
       <button
         type="button"
         className={hydrated && !audio ? 'mb-audio-btn muted' : 'mb-audio-btn'}
@@ -110,14 +126,22 @@ export function TrainingMinibar() {
           <path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" stroke="none" />
         </svg>
       </button>
-      <button type="button" className="mb-audio-btn" id="mbTempoBtn" aria-label="Toggle tempo pacer (3 second lower, 1 second stretch hold, explosive up)" title="Tempo pacer: 3-1-X" aria-pressed="false">
+      <button
+        type="button"
+        className={tempo.active ? 'mb-audio-btn active' : 'mb-audio-btn'}
+        id="mbTempoBtn"
+        onClick={toggleTempo}
+        aria-label="Toggle tempo pacer (3 second lower, 1 second stretch hold, explosive up)"
+        title="Tempo pacer: 3-1-X"
+        aria-pressed={tempo.active}
+      >
         <svg {...ICON}>
           <circle cx="12" cy="12" r="10" />
           <polyline points="12 6 12 12 16 14" />
         </svg>
       </button>
-      <button type="button" className="minibar-kiosk-btn" id="kioskMinibarBtn">
-        Start Workout
+      <button type="button" className="minibar-kiosk-btn" id="kioskMinibarBtn" onClick={toggleWorkoutMode}>
+        {workoutMode ? 'Finish Workout' : 'Start Workout'}
       </button>
     </div>
   );

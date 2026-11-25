@@ -77,10 +77,6 @@ for (const viewport of [{ width: 1280, height: 900 }, { width: 390, height: 844 
   for (const c of CASES) {
     if (c.widths && !c.widths.includes(viewport.width)) continue;
     test(`${c.name} at ${viewport.width}px`, async ({ page }) => {
-      test.skip(
-        c.name === 'minibar' && test.info().project.name === 'preview',
-        'The session bar on /preview has no "00:00" workout timer until Phase 3c',
-      );
       await page.setViewportSize(viewport);
       if (c.seed) await seed(page, c.seed);
       await openApp(page, c.hash ?? '#legsA');

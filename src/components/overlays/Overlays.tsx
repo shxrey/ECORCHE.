@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type MouseEvent } from 'react';
+import { adjustRest, finishWorkoutMode, formatClock, hideRest, inWorkoutMode, stopTempo, TEMPO_PHASES, useRest, useTempo } from '@/components/training/workout';
 import { answerConfirm, dismissToast, useAnnouncement, useConfirmation, useToasts } from './feedback';
 
 const VISUALLY_HIDDEN = {
@@ -26,22 +27,29 @@ const CloseIcon = ({ size }: { size: number }) => (
  * tempo pacer, toasts, the screen-reader announcer, the "?" quick reference,
  * session history and the "Are you sure?" dialog.
  *
- * Rebuilt training core (/preview). The rest timer and tempo pacer (Phase 3c)
- * and session history (3d) are still their markup only.
+ * Rebuilt training core (/preview). Session history (3d) is still its markup only.
  */
 export function Overlays() {
   const toasts = useToasts();
   const announcement = useAnnouncement();
   const confirmation = useConfirmation();
+  const rest = useRest();
+  const tempo = useTempo();
+  const phase = TEMPO_PHASES[tempo.phase];
   const [helpOpen, setHelpOpen] = useState(false);
 
-  // Escape closes whichever dialog is open; for "Are you sure?" that means no.
+  // Escape closes whichever dialog is open (for "Are you sure?" that means
+  // no); with none open, it leaves Workout Mode.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (document.getElementById('mobileDrawer')?.classList.contains('open')) return; // the menu closes itself
-      setHelpOpen(false);
-      answerConfirm(false);
+      if (document.querySelector('.app-modal-overlay.open')) {
+        setHelpOpen(false);
+        answerConfirm(false);
+        return;
+      }
+      if (inWorkoutMode()) finishWorkoutMode();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -54,34 +62,34 @@ export function Overlays() {
 
   return (
     <>
-      <div className="rest-timer" id="restTimer">
+      <div className={['rest-timer', rest.visible && 'visible', rest.done && 'done'].filter(Boolean).join(' ')} id="restTimer">
         <div>
           <div className="rt-time" id="rtTime">
-            1:30
+            {formatClock(rest.remaining)}
           </div>
           <div className="rt-label">Rest</div>
         </div>
-        <button className="rt-btn" aria-label="Subtract 15 seconds">
+        <button className="rt-btn" onClick={() => adjustRest(-15)} aria-label="Subtract 15 seconds">
           −15
         </button>
-        <button className="rt-btn" aria-label="Add 15 seconds">
+        <button className="rt-btn" onClick={() => adjustRest(15)} aria-label="Add 15 seconds">
           +15
         </button>
-        <button className="rt-close" aria-label="Dismiss timer">
+        <button className="rt-close" onClick={hideRest} aria-label="Dismiss timer">
           <CloseIcon size={14} />
         </button>
       </div>
 
-      <div className="rest-timer tempo-pacer" id="tempoPacer">
+      <div className={tempo.active ? `rest-timer tempo-pacer visible phase-${phase.key}` : 'rest-timer tempo-pacer'} id="tempoPacer">
         <div>
           <div className="rt-time" id="tpPhaseLabel">
-            Lower
+            {phase.label}
           </div>
           <div className="rt-label" id="tpPhaseSeconds">
-            3s
+            {phase.seconds}
           </div>
         </div>
-        <button className="rt-close" aria-label="Stop tempo pacer">
+        <button className="rt-close" onClick={stopTempo} aria-label="Stop tempo pacer">
           <CloseIcon size={14} />
         </button>
       </div>

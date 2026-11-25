@@ -3,17 +3,15 @@
 import { useEffect, useRef, type KeyboardEvent, type MouseEvent } from 'react';
 import { announce } from '@/components/overlays/feedback';
 import { DetailBlockView, MetaPill } from '@/components/workout/ExerciseCard';
+import { displayName } from '@/content/names';
 import type { Exercise } from '@/content/types';
 import { trainingStore, useTraining } from '@/lib/training/client';
+import { restSeconds } from '@/lib/training/prescription';
 import { setKey } from '@/lib/training/progress';
 import { useHydrated } from '@/lib/useHydrated';
 import { LastLogged, LogPanel } from './LogPanel';
 import { useExerciseLog } from './useExerciseLog';
-
-/** The name as shown in the card's heading, suffix included ("Barbell Back Squats Peak Intensity"). */
-export function displayName(ex: Exercise): string {
-  return ex.nameSuffix ? `${ex.name} ${ex.nameSuffix.text}` : ex.name;
-}
+import { inWorkoutMode, startRest } from './workout';
 
 /**
  * Opens or closes a card's body with a height animation. Opening animates to
@@ -39,20 +37,27 @@ function animateBody(card: HTMLElement, body: HTMLElement, inner: HTMLElement, o
 /**
  * One exercise in the rebuilt training core: tap the header (or Enter / Space)
  * to open it, tap a set button to tick or untick that set (ticking also saves
- * that set's boxes). Once the page is live it gets its session log ("Last:"
- * in the header, the log panel in the body). A card whose sets are all ticked
- * is marked complete. Same markup as the original page.
+ * that set's boxes, and with Auto-Rest on starts the rest timer). Once the
+ * page is live it gets its session log ("Last:" in the header, the log panel
+ * in the body) and the "Next:" line Workout Mode shows. A card whose sets are
+ * all ticked is marked complete; in Workout Mode it then closes itself. Same
+ * markup as the original page.
  */
 export function TrainingExerciseCard({
   exercise: ex,
   dayId,
+  nextName,
   expanded,
   onToggle,
+  onClose,
 }: {
   exercise: Exercise;
   dayId: string;
+  /** The exercise after this one in the day, or null for the last. */
+  nextName: string | null;
   expanded: boolean;
   onToggle: () => void;
+  onClose: () => void;
 }) {
   const hydrated = useHydrated();
   const doneMap = useTraining((s) => s.doneMap);
@@ -89,6 +94,10 @@ export function TrainingExerciseCard({
     if (navigator.vibrate) navigator.vibrate(50);
     // A ticked set was done: save what its boxes hold (only this set).
     log.commit(idx, { whenEdited: false });
+    const state = trainingStore().getState();
+    // In Workout Mode a finished exercise folds away, so the next one is what stands out.
+    if (inWorkoutMode() && ex.setDots.every((dot) => state.doneMap[setKey(ex.key, dot.idx)])) setTimeout(onClose, 450);
+    if (state.prefs.autoRest) startRest(restSeconds(ex.reps));
   };
 
   const onHeaderClick = (e: MouseEvent) => {
@@ -162,6 +171,11 @@ export function TrainingExerciseCard({
             ))}
           </div>
           {hydrated ? <LogPanel exKey={ex.key} name={name} log={log} /> : null}
+          {hydrated ? (
+            <div className="next-up-teaser" id={`nextUp-${ex.key}`}>
+              {nextName ? `Next: ${nextName}` : 'Last exercise of the day — finish strong.'}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

@@ -3,28 +3,7 @@
  * tiny stores any component can use: showToast(…), askToConfirm(…),
  * announce(…). <Overlays /> draws them, in the same markup as the original page.
  */
-import { useSyncExternalStore } from 'react';
-
-function createSignal<T>(initial: T) {
-  let value = initial;
-  const listeners = new Set<() => void>();
-  return {
-    get: () => value,
-    set(next: T) {
-      value = next;
-      listeners.forEach((listener) => listener());
-    },
-    subscribe(listener: () => void) {
-      listeners.add(listener);
-      return () => {
-        listeners.delete(listener);
-      };
-    },
-    use(): T {
-      return useSyncExternalStore(this.subscribe, this.get, () => initial);
-    },
-  };
-}
+import { createSignal } from '@/lib/signal';
 
 // ---------- toasts ----------
 
@@ -74,6 +53,9 @@ export function answerConfirm(confirmed: boolean): void {
   confirmation.set(null);
   if (confirmed && pending) pending.onConfirm();
 }
+
+/** Whether "Are you sure?" is open right now (for the Escape key). */
+export const isConfirmOpen = (): boolean => confirmation.get() !== null;
 
 export function useConfirmation(): { open: boolean; message: string } {
   const pending = confirmation.use();
