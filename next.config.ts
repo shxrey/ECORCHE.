@@ -6,12 +6,18 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
 /**
  * What the browser may load and do on this site. Everything is served from
  * our own domain; the only outside connection is Supabase (accounts + sync).
- * 'unsafe-inline' scripts stay allowed for now because the original app's
- * markup uses inline onclick handlers; that goes away as sections move to React.
+ *
+ * Inline event handlers (onclick="…", the usual way injected HTML runs code)
+ * are blocked outright: no page has any since the old script went (Phase 4 of
+ * docs/react-rebuild-plan.md). Inline <script> elements stay allowed: Next.js
+ * puts each page's data and loader in inline scripts (46 on the protocol
+ * page), and the strict alternative, a fresh nonce on every visit, would
+ * render every page per request instead of serving it pre-built.
  */
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:",
   "font-src 'self'",
