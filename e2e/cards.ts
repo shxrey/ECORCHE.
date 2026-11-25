@@ -1,7 +1,8 @@
 /**
  * Reading every exercise card's session log off a page, and what the
- * training modules say it should show: shared by e2e/parity.spec.ts (the old
- * page) and e2e/preview.spec.ts (the rebuilt core at /preview).
+ * training modules say it should show (e2e/saved-data.spec.ts). `oldPage`
+ * is from before the switch-over (25 Nov 2026), when this also checked the
+ * old script's page; it goes in Phase 4.
  */
 import type { Page } from '@playwright/test';
 import { exercises } from '../src/content/program';

@@ -28,7 +28,7 @@ const INFO_TEXT = 'Tracks every working set across all 6 sessions — Leg A/B, P
 /**
  * "Weekly Progress Tracker": the training-week banner, kg/lb and Auto-Rest
  * switches, the week ring, a card per day (tap to jump to it), and the data
- * buttons (history, backups, CSV: dataTools.ts). Rebuilt training core (/preview).
+ * buttons (history, backups, CSV: dataTools.ts).
  *
  * The server HTML is the original page's; the live numbers fill in once the
  * page is running.

@@ -145,7 +145,7 @@ for (const name of ported) {
   console.log(`OK ${name}: identical to the original (${count} nodes${handlers}).`);
 }
 
-// The rebuilt training core (/preview): its server HTML must be the original page's too.
+// The training core (the page since 25 Nov 2026): its server HTML must be the original page's too.
 const PREVIEW: Record<string, { original: string; element: ReactElement }> = {
   'nav + session bar': {
     original: fragments.nav,
@@ -163,6 +163,6 @@ const PREVIEW: Record<string, { original: string; element: ReactElement }> = {
 };
 for (const [name, { original, element }] of Object.entries(PREVIEW)) {
   const moved = new Set<string>();
-  const count = compare(`/preview ${name}`, original, renderToStaticMarkup(element), moved);
-  console.log(`OK /preview ${name}: identical to the original (${count} nodes; ${moved.size} kinds of inline handler now in React).`);
+  const count = compare(`training core: ${name}`, original, renderToStaticMarkup(element), moved);
+  console.log(`OK training core: ${name}: identical to the original (${count} nodes; ${moved.size} kinds of inline handler now in React).`);
 }

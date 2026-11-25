@@ -54,13 +54,6 @@
    revealed element stays shown when a component changes its class. */
 .reveal[data-revealed] { opacity: 1; transform: translateY(0); }
 
-/* The hidden /preview build's corner label (src/app/preview/page.tsx). */
-.preview-badge {
-  position: fixed; left: 10px; bottom: 10px; z-index: 900; padding: 4px 10px; border-radius: 999px;
-  background: var(--bg-elevated); border: 1px solid var(--border-strong); color: var(--ink-muted);
-  font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none;
-}
-
 /* Phones: a long ▲/▼ badge ("▲ +2.5kg ready") wraps under the boxes instead of
    running off the card and being cut off (rebuilt training core only). */
 .set-log-panel[data-rebuilt] .set-log-row { flex-wrap: wrap; }

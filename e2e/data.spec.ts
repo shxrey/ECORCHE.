@@ -1,8 +1,44 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { appPath, confirmDialog, dateKey, dot, expand, openApp, seed, weightBox } from './helpers';
+import { exercises } from '../src/content/program';
+import { applyBackup, readBackup } from '../src/lib/training/backup';
+import type { TrainingState } from '../src/lib/training/types';
+import { confirmDialog, dateKey, dot, expand, openApp, seed, weightBox } from './helpers';
+import { NOW, randomData, TODAY } from './random-data';
 
 const yesterday = dateKey(-1);
+
+// ---------- every backup format, imported through the page ----------
+
+// The committed example files, plus real ones from BACKUP_DIR=<folder> (never
+// commit those: the repo is public; only "your backup #N" is printed).
+const fixtureDir = join(process.cwd(), 'src/lib/training/fixtures');
+const backupFiles = [
+  ...readdirSync(fixtureDir).filter((f) => f.endsWith('.json')).map((f) => ({ name: f, path: join(fixtureDir, f) })),
+  ...(process.env.BACKUP_DIR
+    ? readdirSync(process.env.BACKUP_DIR).filter((f) => f.endsWith('.json')).map((f, i) => ({ name: `your backup #${i + 1}`, path: join(process.env.BACKUP_DIR!, f) }))
+    : []),
+];
+const EXERCISE_KEYS = new Set(exercises.map((e) => e.key));
+
+for (const file of backupFiles) {
+  test(`importing ${file.name} gives what the backup module works out`, async ({ page }) => {
+    const { seed: existing, state } = randomData(7, 'kg'); // progress already on the device: replaced or kept
+    await page.clock.setFixedTime(NOW);
+    await seed(page, existing);
+    await openApp(page);
+    await page.locator('#importFileInput').setInputFiles(file.path);
+    await confirmDialog(page);
+    await expect(page.locator('#toastStack')).toContainText('Progress imported successfully.');
+    const shown = await page.evaluate(() => (window as unknown as { __training: { readState(): TrainingState } }).__training.readState());
+
+    const read = readBackup(readFileSync(file.path, 'utf8'), EXERCISE_KEYS, TODAY);
+    expect(read.ok).toBe(true);
+    if (!read.ok) return;
+    expect(shown).toEqual(JSON.parse(JSON.stringify(applyBackup(state, read.contents))));
+  });
+}
 
 test.describe('backups and exports', () => {
   test('Export Backup saves everything, and importing it on a fresh device restores it', async ({ page, browser }) => {
@@ -53,7 +89,6 @@ test.describe('backups and exports', () => {
   });
 
   test("View History counts this week's sets", async ({ page }) => {
-    // A Wednesday: on Sundays the old page files the day's sets under last week (test below).
     await page.clock.setFixedTime(new Date(2026, 10, 25, 15, 0));
     await openApp(page);
     await dot(page, 'legs-a1', 1).click();
@@ -63,12 +98,11 @@ test.describe('backups and exports', () => {
     await expect(page.locator('#histThisWeek')).toContainText('2');
   });
 
-  // Known bug on the old page, fixed in the rebuild: the week's start keeps
-  // the current time of day, so on a Sunday afternoon that morning's sets
-  // count as last week and "this week" reads 0. (Every other day, weeks
-  // already run Monday–Sunday.)
+  // Old-page bug, fixed in the rebuild: the week's start kept the current
+  // time of day, so on a Sunday afternoon that morning's sets counted as last
+  // week and "this week" read 0. (Every other day, weeks already ran
+  // Monday–Sunday.)
   test("on a Sunday, View History counts that day's sets in this week", async ({ page }) => {
-    test.fixme(appPath() === '/', 'old page: Sunday counts as last week');
     await page.clock.setFixedTime(new Date(2026, 10, 29, 15, 0)); // Sunday
     await openApp(page);
     await dot(page, 'legs-a1', 1).click();

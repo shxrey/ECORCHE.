@@ -1,8 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { appPath, card, dateKey, dot, enter, expand, openApp, reload, repsBox, row, saved, seed, weightBox } from './helpers';
-
-/** Fixed in the rebuilt training core (/preview); the live page keeps the old behaviour until the switch-over. */
-const OLD_PAGE_BUG = 'Old-page bug, fixed in the rebuilt core';
+import { card, dateKey, dot, enter, expand, openApp, reload, repsBox, row, saved, seed, weightBox } from './helpers';
 
 const EX = 'legs-a1';
 const yesterday = dateKey(-1);
@@ -60,21 +57,19 @@ test.describe('logging weight, reps and RIR', () => {
     await expect(page.locator(`#lastLog-${EX}`)).toHaveText('Last: 100kg × 8');
   });
 
-  // Old-page bug (fixed in the rebuilt core): typing in one set's box also saves the
+  // Old-page bug, fixed in the rebuild: typing in one set's box also saves the
   // suggested numbers sitting in the card's other rows as real sets (so here
   // set 2 gets 102.5 × 6 "logged", and "Last:" shows it).
   test("editing one set doesn't save the other rows' suggestions as sets", async ({ page }) => {
-    test.fixme(appPath() === '/', OLD_PAGE_BUG);
     await withYesterday(page);
     await enter(page, weightBox(page, EX, 1), '105');
     expect((await saved(page)).logMap[EX][today]['2']).toBeUndefined();
     await expect(page.locator(`#lastLog-${EX}`)).toHaveText('Last: 105kg × 8');
   });
 
-  // Old-page bug (fixed in the rebuilt core): a re-save compares the set with its own
+  // Old-page bug, fixed in the rebuild: a re-save compares the set with its own
   // earlier save today, so typing the RIR after a PR wipes the PR.
   test('a PR stays a PR when the same set is edited again', async ({ page }) => {
-    test.fixme(appPath() === '/', OLD_PAGE_BUG);
     await withYesterday(page);
     await enter(page, weightBox(page, EX, 1), '110');
     await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
@@ -83,10 +78,9 @@ test.describe('logging weight, reps and RIR', () => {
     expect((await saved(page)).logMap[EX][today]['1']).toMatchObject({ w: '110', rir: '1', pr: true });
   });
 
-  // Old-page bug (fixed in the rebuilt core): the lasting "PR" tag is only drawn when the
+  // Old-page bug, fixed in the rebuild: the lasting "PR" tag is only drawn when the
   // PR happens, never when the page loads, so a reload hides it.
   test('a PR still shows its tag after a reload', async ({ page }) => {
-    test.fixme(appPath() === '/', OLD_PAGE_BUG);
     await withYesterday(page);
     await enter(page, weightBox(page, EX, 1), '110');
     await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
@@ -96,11 +90,10 @@ test.describe('logging weight, reps and RIR', () => {
     await expect(row(page, EX, 1).locator('.pr-persistent-badge')).toBeVisible();
   });
 
-  // Old-page bug (fixed in the rebuilt core): on narrower phones the row is
+  // Old-page bug, fixed in the rebuild: on narrower phones the row is
   // wider than the card, so badges run off its edge and are cut off (at 360px
   // wide, by 21-34px; at 375px by up to 19px; at 390px only "hold" by 4px).
   test('on a phone, every ▲ / hold / ▼ badge stays inside the card', async ({ page }) => {
-    test.fixme(appPath() === '/', OLD_PAGE_BUG);
     await page.setViewportSize({ width: 360, height: 800 });
     await seed(page, { logMap: { [EX]: { [yesterday]: { 1: { w: '100', r: '8', rir: '' }, 2: { w: '102.5', r: '6', rir: '' }, 3: { w: '100', r: '8', rir: '' } } } } });
     await openApp(page, '#legsA');

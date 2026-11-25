@@ -3,8 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 type LogEntry = { w?: string; r?: string; rir?: string; pr?: boolean };
 
 /**
- * The page under test: "/" (the live page, old script) or "/preview" (the
- * rebuilt training core), set per project in playwright.config.ts.
+ * The page under test: "/", unless a test project sets another. (Until the
+ * switch-over on 25 Nov 2026 one did: "/preview", the rebuilt training core.)
  */
 export function appPath(): string {
   return (test.info().project.metadata as { appPath?: string } | undefined)?.appPath ?? '/';

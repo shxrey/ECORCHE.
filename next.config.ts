@@ -40,6 +40,11 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },
+  async redirects() {
+    // The rebuilt training core was tried out at /preview before "/" switched
+    // to it (25 Nov 2026). Temporary, so phones don't remember it for good.
+    return [{ source: '/preview', destination: '/', permanent: false }];
+  },
 };
 
 export default nextConfig;

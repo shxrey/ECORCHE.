@@ -36,7 +36,6 @@ const CloseIcon = ({ size }: { size: number }) => (
  * tempo pacer, toasts, the screen-reader announcer, the "?" quick reference,
  * session history and the "Are you sure?" dialog.
  *
- * Rebuilt training core (/preview).
  */
 export function Overlays() {
   const toasts = useToasts();

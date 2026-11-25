@@ -38,6 +38,12 @@ test.describe('hero and the day that is showing', () => {
     expect(html).toMatch(/id="heroTitle">LEG DAY<br\/?>/);
   });
 
+  test('the old /preview address opens the page (a temporary redirect)', async ({ request }) => {
+    const res = await request.get('/preview', { maxRedirects: 0 });
+    expect(res.status()).toBe(307);
+    expect(res.headers().location).toBe('/');
+  });
+
   test('opening the site with no address shows Legs A and writes #legsA', async ({ page }) => {
     await page.goto(appPath());
     await page.waitForFunction(() => '__legacyBridge' in window || '__training' in window);

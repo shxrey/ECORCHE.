@@ -222,7 +222,20 @@ you're happy, `/` switches over.
     (a stand-in save dialog) and a browser without it. The Sunday test is parked on the
     live page and passes on `/preview`. Pixel check: Session History with two weeks of
     sets is identical to the live page's, at both widths.
-- [ ] Switch `/` to the new core.
+- [x] Switch `/` to the new core.
+  - Done 25 Nov. `src/app/page.tsx` is what `/preview` was, minus its corner label; the old
+    script no longer loads anywhere. `/preview` is a temporary redirect to `/` (temporary
+    so phones don't remember it for good, in case the redesign wants a preview address).
+  - Tests: one Playwright project again, on `/`. The five old-page bugs parked with
+    `test.fixme` now run and pass there. Retired with the old page: `e2e/parity.spec.ts`
+    (old page against the modules) and the two "each page reads the other's saves" tests;
+    `preview.spec.ts` became `saved-data.spec.ts` (random histories against the modules) and
+    `bridge.spec.ts` became `sync.spec.ts` (the same contract, on the training store). Every
+    backup format, plus `BACKUP_DIR`'s real files, is now imported through the page in
+    `data.spec.ts`: the 8 real backups from Jul–Aug 2026 still give exactly what the module
+    works out.
+  - Pixel check: all 38 pictures of the new `/` are identical to the old page's, taken the
+    same day.
 
 ## Phase 4: Clean-up (1 session)
 

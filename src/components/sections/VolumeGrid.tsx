@@ -25,7 +25,7 @@ const ZONE_STYLE = { left: '41.67%', width: '41.67%' };
  * highlights it and the shown day's exercises for that muscle.
  *
  * Each card's "N logged so far · last trained …" line needs the training
- * data: with `liveCounts` (the rebuilt training core, /preview) it comes from
+ * data: with `liveCounts` (the training core, on the page since 25 Nov 2026) it comes from
  * the training store; otherwise public/legacy/protocol.js adds it, and React
  * never adds or removes a card's children, so that line is left alone.
  */

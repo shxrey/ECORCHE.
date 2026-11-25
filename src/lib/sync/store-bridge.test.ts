@@ -1,5 +1,5 @@
 /**
- * Sync connected straight to the training store (the rebuilt core, /preview),
+ * Sync connected straight to the training store (what the page uses),
  * through trainingStoreBridge (npm run test:unit).
  */
 import assert from 'node:assert/strict';

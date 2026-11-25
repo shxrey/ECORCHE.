@@ -1,7 +1,8 @@
 /**
  * The training store in the browser: one per page, on localStorage, with
- * React hooks. Used by the rebuilt training core (/preview for now); the
- * live page still runs the old script, which reads and writes the same keys.
+ * React hooks. The page's tracker, workout and session bar run on it; the
+ * keys and formats are the old script's, so data saved before the switch-over
+ * (25 Nov 2026) reads as it was.
  *
  * Components read with useTraining(select). `select` must return a piece of
  * the state as it is (doneMap, prefs.unit…), not a new object: work out

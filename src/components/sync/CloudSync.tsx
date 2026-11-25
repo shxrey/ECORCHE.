@@ -17,9 +17,9 @@ const POLL_MS = 45_000;
  * and this quietly keeps that copy and the account in step. The sync code
  * and the client library are only downloaded once someone is signed in.
  *
- * `source`: whose data to sync. "legacy" (the live page) waits for the old
- * script's bridge; "store" (the rebuilt training core, /preview) uses the
- * training store directly.
+ * `source`: whose data to sync. "store" (the page, since 25 Nov 2026) uses
+ * the training store directly; "legacy" waits for the old script's bridge
+ * (unused now, removed in Phase 4).
  */
 export function CloudSync({ source = 'legacy' }: { source?: 'legacy' | 'store' }) {
   const auth = useUser();

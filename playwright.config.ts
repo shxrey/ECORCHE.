@@ -20,18 +20,9 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: 'retain-on-failure',
   },
-  projects: [
-    { name: 'desktop', use: { ...devices['Desktop Chrome'] }, testIgnore: ['preview.spec.ts'] },
-    // The rebuilt training core at /preview (docs/react-rebuild-plan.md, Phase 3),
-    // held to the same tests as the live page: the ones it can pass so far. Widen
-    // these as each step lands; at the switch-over it runs them all.
-    {
-      name: 'preview',
-      use: { ...devices['Desktop Chrome'] },
-      metadata: { appPath: '/preview' },
-      testMatch: ['preview.spec.ts', 'tracking.spec.ts', 'logging.spec.ts', 'shell.spec.ts', 'sections.spec.ts', 'timers.spec.ts', 'data.spec.ts'],
-    },
-  ],
+  // (Until the switch-over on 25 Nov 2026 a second project ran these against
+  // the rebuilt core at /preview, while "/" still ran the old script.)
+  projects: [{ name: 'desktop', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: `npm run build && npx next start -p ${PORT}`,
     url: `http://127.0.0.1:${PORT}`,
